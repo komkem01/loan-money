@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Loan Tracker</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons for the eye icon -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        /* Custom font from Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-emerald-50 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-sm p-8 space-y-6 bg-white/80 backdrop-blur-sm rounded-[2rem] shadow-xl">
+        <div class="flex flex-col items-center space-y-3">
+            <!-- Cute Icon -->
+            <svg class="w-20 h-20 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962a3.75 3.75 0 015.962 0L14.25 6h5.25a3 3 0 013 3v5.25M12 21V3.75" />
+            </svg>
+
+            <h1 class="text-3xl font-extrabold text-center text-gray-800">Create Account</h1>
+            <p class="text-center text-gray-500">Join us and start tracking!</p>
+        </div>
+
+        <!-- Registration Form -->
+        <form id="registerForm" class="space-y-4">
+            <!-- Full Name Input -->
+            <div>
+                <label for="fullName" class="text-sm font-semibold block mb-2 text-gray-600">Full Name</label>
+                <input type="text" id="fullName" name="fullName"
+                    class="w-full p-3 bg-gray-50/70 border border-gray-300 rounded-xl text-gray-800 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                    placeholder="Your Name" required>
+            </div>
+
+            <!-- Username Input -->
+            <div>
+                <label for="username" class="text-sm font-semibold block mb-2 text-gray-600">Username</label>
+                <input type="text" id="username" name="username"
+                    class="w-full p-3 bg-gray-50/70 border border-gray-300 rounded-xl text-gray-800 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                    placeholder="your_username" required>
+            </div>
+
+            <!-- Password Input -->
+            <div>
+                <label for="password" class="text-sm font-semibold block mb-2 text-gray-600">Password</label>
+                <div class="relative">
+                    <input type="password" id="password" name="password"
+                        class="w-full p-3 pr-10 bg-gray-50/70 border border-gray-300 rounded-xl text-gray-800 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                        placeholder="••••••••" required>
+                    <button type="button" id="togglePassword"
+                        class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-emerald-500">
+                        <i class="ph ph-eye text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Confirm Password Input -->
+            <div>
+                <label for="confirmPassword" class="text-sm font-semibold block mb-2 text-gray-600">Confirm
+                    Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword"
+                    class="w-full p-3 bg-gray-50/70 border border-gray-300 rounded-xl text-gray-800 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                    placeholder="••••••••" required>
+            </div>
+
+            <!-- Message Display Area -->
+            <div id="message" class="text-sm text-center font-semibold"></div>
+
+            <!-- Submit Button -->
+            <button type="submit"
+                class="w-full text-white bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-300 font-bold rounded-xl text-md px-5 py-3 text-center transition duration-300 shadow-lg hover:shadow-emerald-300/50">
+                Sign Up
+            </button>
+        </form>
+
+        <p class="text-sm text-center text-gray-500">
+            Already have an account? <a href="./index.html" class="font-bold text-emerald-600 hover:underline">Sign
+                In</a>
+        </p>
+    </div>
+
+    <script>
+        const registerForm = document.getElementById('registerForm');
+        const messageDiv = document.getElementById('message');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const togglePasswordButton = document.getElementById('togglePassword');
+        const toggleIcon = togglePasswordButton.querySelector('i');
+
+        // --- Show/Hide Password Logic ---
+        togglePasswordButton.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            toggleIcon.classList.toggle('ph-eye');
+            toggleIcon.classList.toggle('ph-eye-slash');
+        });
+
+        // --- Form Submission Logic ---
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            messageDiv.textContent = '';
+
+            const fullName = document.getElementById('fullName').value;
+            const username = document.getElementById('username').value;
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            // --- Basic Validation ---
+            if (password !== confirmPassword) {
+                messageDiv.textContent = 'Passwords do not match!';
+                messageDiv.className = 'text-sm text-center font-semibold text-red-500';
+                return;
+            }
+
+            console.log('Attempting to register with:', { fullName, username, password });
+
+            try {
+                // --- TODO: API Call ---
+                // This is where you will send the data to your Go backend.
+                // The endpoint might be something like '/api/register'
+                /*
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ full_name: fullName, username, password })
+                });
+
+                if (response.ok) {
+                    messageDiv.textContent = 'Registration successful! Redirecting to login...';
+                    messageDiv.className = 'text-sm text-center font-semibold text-green-500';
+                    setTimeout(() => {
+                        window.location.href = './index.html';
+                    }, 2000);
+                } else {
+                    const errorData = await response.json();
+                    messageDiv.textContent = errorData.error || 'Registration failed.';
+                    messageDiv.className = 'text-sm text-center font-semibold text-red-500';
+                }
+                */
+
+                // For demonstration purposes:
+                messageDiv.textContent = 'Registration successful! Please login.';
+                messageDiv.className = 'text-sm text-center font-semibold text-green-500';
+                setTimeout(() => {
+                    window.location.href = './index.html';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Registration failed:', error);
+                messageDiv.textContent = 'An error occurred. Please try again.';
+                messageDiv.className = 'text-sm text-center font-semibold text-red-500';
+            }
+        });
+    </script>
+
+</body>
+
+</html>

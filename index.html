@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/Icon/image.png"/>
+    <title>Login - Loan Tracker</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons for the eye icon -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        /* Custom font from Google Fonts for a cuter look */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+        }
+
+        /* A subtle animation for the icon */
+        .breathing-icon {
+            animation: breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-emerald-50 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-sm p-8 space-y-6 bg-white/80 backdrop-blur-sm rounded-[2rem] shadow-xl">
+        <div class="flex flex-col items-center space-y-3">
+            <!-- Cute Piggy Bank Icon with Animation -->
+            <div class="breathing-icon">
+                <svg class="w-20 h-20 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c1.355 0 2.707-.158 4.007-.462M12 21c-1.355 0-2.707-.158-4.007-.462m0 0A9.005 9.005 0 0112 3c1.355 0 2.707.158 4.007.462m0 0A9.005 9.005 0 0012 3C10.645 3 9.293 3.158 8 3.462m0 0c-1.233 1.043-1.936 2.528-1.936 4.218 0 2.404 1.134 4.563 2.87 5.926m1.936-4.218c.288-.242.607-.453.95-.626m0 0a4.5 4.5 0 015.172 0m-.216 4.84c1.135-.333 2.16-.822 3.091-1.456m-8.1 0c.931.634 1.956 1.123 3.091 1.456" />
+                </svg>
+            </div>
+
+            <h1 class="text-3xl font-extrabold text-center text-gray-800">Welcome Back!</h1>
+            <p class="text-center text-gray-500">Let's manage your loans!</p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="space-y-6">
+            <!-- Username Input -->
+            <div>
+                <label for="username" class="text-sm font-semibold block mb-2 text-gray-600">Username</label>
+                <input type="text" id="username" name="username"
+                    class="w-full p-3 bg-gray-50/70 border border-gray-300 rounded-xl text-gray-800 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                    placeholder="username" required>
+            </div>
+
+            <!-- Password Input with Show/Hide Toggle -->
+            <div>
+                <label for="password" class="text-sm font-semibold block mb-2 text-gray-600">Password</label>
+                <div class="relative">
+                    <input type="password" id="password" name="password"
+                        class="w-full p-3 pr-10 bg-gray-50/70 border border-gray-300 rounded-xl text-gray-800 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                        placeholder="••••••••" required>
+                    <button type="button" id="togglePassword"
+                        class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-emerald-500">
+                        <i class="ph ph-eye text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Message Display Area -->
+            <div id="message" class="text-sm text-center font-semibold"></div>
+
+            <!-- Submit Button -->
+            <button type="submit"
+                class="w-full text-white bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-300 font-bold rounded-xl text-md px-5 py-3 text-center transition duration-300 shadow-lg hover:shadow-emerald-300/50">
+                Sign In
+            </button>
+        </form>
+
+        <p class="text-sm text-center text-gray-500">
+            No account yet? <a href="/register.html" class="font-bold text-emerald-600 hover:underline">Create One!</a>
+        </p>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const messageDiv = document.getElementById('message');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordButton = document.getElementById('togglePassword');
+        const toggleIcon = togglePasswordButton.querySelector('i');
+
+        // --- Show/Hide Password Logic ---
+        togglePasswordButton.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            toggleIcon.classList.toggle('ph-eye');
+            toggleIcon.classList.toggle('ph-eye-slash');
+        });
+
+        // --- Form Submission Logic ---
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            messageDiv.textContent = '';
+
+            const username = document.getElementById('username').value;
+            const password = passwordInput.value;
+
+            console.log('Attempting to log in with:', { username, password });
+
+            try {
+                // --- TODO: API Call ---
+                // Replace this with your actual API call to the Go backend
+
+                // For demonstration purposes:
+                messageDiv.textContent = 'Login successful! Redirecting...';
+                messageDiv.className = 'text-sm text-center font-semibold text-green-500';
+
+                setTimeout(() => {
+                    alert('Redirecting to dashboard...');
+                    // window.location.href = '/dashboard.html';
+                }, 1500);
+
+            } catch (error) {
+                console.error('Login failed:', error);
+                messageDiv.textContent = 'An error occurred. Please try again.';
+                messageDiv.className = 'text-sm text-center font-semibold text-red-500';
+            }
+        });
+    </script>
+
+</body>
+
+</html>

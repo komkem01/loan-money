@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>management - Loan Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Nunito', sans-serif;
+            overflow-x: hidden;
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #d1fae5; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6ee7b7; }
+    </style>
+</head>
+<body class="bg-emerald-50">
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="w-64 bg-white shadow-lg fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-40">
+            <!-- Logo -->
+            <div class="flex items-center justify-center h-20 border-b">
+                 <div class="flex items-center space-x-2">
+                    <svg class="w-10 h-10 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c1.355 0 2.707-.158 4.007-.462M12 21c-1.355 0-2.707-.158-4.007-.462m0 0A9.005 9.005 0 0112 3c1.355 0 2.707.158 4.007.462m0 0A9.005 9.005 0 0012 3C10.645 3 9.293 3.158 8 3.462m0 0c-1.233 1.043-1.936 2.528-1.936 4.218 0 2.404 1.134 4.563 2.87 5.926m1.936-4.218c.288-.242.607-.453.95-.626m0 0a4.5 4.5 0 015.172 0m-.216 4.84c1.135-.333 2.16-.822 3.091-1.456m-8.1 0c.931.634 1.956 1.123 3.091 1.456" />
+                    </svg>
+                    <span class="text-2xl font-extrabold text-gray-800">Loan Tracker</span>
+                </div>
+            </div>
+            <!-- Menu -->
+            <nav class="mt-8 px-4">
+                <a href="./dashboard.html" class="flex items-center space-x-3 p-3 rounded-xl text-gray-600 hover:bg-emerald-50 transition-colors">
+                    <i class="ph-house-line text-2xl"></i>
+                    <span>แดชบอร์ด</span>
+                </a>
+                 <a href="./loan-management.html" class="mt-2 flex items-center space-x-3 p-3 rounded-xl bg-emerald-100 text-emerald-600 font-bold transition-colors">
+                    <i class="ph-list-bullets text-2xl"></i>
+                    <span>จัดการยืม-คืน</span>
+                </a>
+                <a href="/payment.html" class="mt-2 flex items-center space-x-3 p-3 rounded-xl text-gray-600 hover:bg-emerald-50 transition-colors">
+                    <i class="ph-receipt text-2xl"></i>
+                    <span>หน้าชำระเงิน</span>
+                </a>
+                <a href="/profile.html" class="mt-2 flex items-center space-x-3 p-3 rounded-xl text-gray-600 hover:bg-emerald-50 transition-colors">
+                    <i class="ph-user-circle text-2xl"></i>
+                    <span>จัดการข้อมูลส่วนตัว</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Header -->
+            <header class="bg-white/80 backdrop-blur-sm shadow-md sticky top-0 z-20">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between h-16">
+                        <button id="menuBtn" class="md:hidden text-gray-600 hover:text-emerald-600">
+                            <i class="ph-list text-3xl"></i>
+                        </button>
+                        <div class="flex-1"></div>
+                        <div class="flex items-center space-x-4">
+                            <span class="font-semibold text-gray-700 hidden sm:block">Welcome, <span id="userFullName">User</span>!</span>
+                            <button id="logoutButton" class="text-gray-500 hover:text-emerald-600 focus:outline-none">
+                                <i class="ph-sign-out text-2xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="flex-1 container mx-auto p-4 sm:p-6 lg:p-8">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                    <h1 class="text-3xl font-extrabold text-gray-800 mb-4 sm:mb-0">จัดการข้อมูลยืม-คืน</h1>
+                    <button id="addLoanBtn" class="w-full sm:w-auto flex items-center justify-center space-x-2 px-5 py-3 text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl font-bold shadow-lg hover:shadow-emerald-300/50 transition duration-300">
+                        <i class="ph-plus-circle text-2xl"></i>
+                        <span>Add New Loan</span>
+                    </button>
+                </div>
+
+                <!-- Loans Table -->
+                <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 rounded-l-lg">Borrower</th>
+                                <th scope="col" class="px-6 py-3">Amount</th>
+                                <th scope="col" class="px-6 py-3">Status</th>
+                                <th scope="col" class="px-6 py-3">Due Date</th>
+                                <th scope="col" class="px-6 py-3 rounded-r-lg text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="loanTableBody">
+                           <!-- Table rows will be injected here by JavaScript -->
+                        </tbody>
+                    </table>
+                     <div id="noDataMessage" class="hidden text-center py-16">
+                        <i class="ph-files text-6xl text-gray-300"></i>
+                        <p class="text-gray-500 mt-4">No loans found. Add one to get started!</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Loan Modal -->
+    <div id="loanModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 transform scale-95 modal">
+            <div class="flex items-center justify-between mb-6">
+                <h2 id="modalTitle" class="text-2xl font-extrabold text-gray-800">Add New Loan</h2>
+                <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600"><i class="ph-x text-2xl"></i></button>
+            </div>
+            <form id="loanForm" class="space-y-4">
+                <input type="hidden" id="loanId">
+                <div>
+                    <label for="borrowerName" class="text-sm font-semibold block mb-2 text-gray-600">Borrower's Name</label>
+                    <input type="text" id="borrowerName" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" required>
+                </div>
+                <div>
+                    <label for="amount" class="text-sm font-semibold block mb-2 text-gray-600">Amount (฿)</label>
+                    <input type="number" id="amount" step="0.01" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" required>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="loanDate" class="text-sm font-semibold block mb-2 text-gray-600">Loan Date</label>
+                        <input type="date" id="loanDate" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" required>
+                    </div>
+                    <div>
+                        <label for="dueDate" class="text-sm font-semibold block mb-2 text-gray-600">Due Date (Optional)</label>
+                        <input type="date" id="dueDate" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl">
+                    </div>
+                </div>
+                <div class="pt-4">
+                    <button type="submit" class="w-full text-white bg-emerald-500 hover:bg-emerald-600 font-bold rounded-xl py-3 text-center transition">Save Loan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- Sidebar Toggle ---
+        document.getElementById('menuBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+
+        // --- Modal Logic ---
+        const loanModal = document.getElementById('loanModal');
+        const openModal = () => {
+            loanModal.classList.remove('hidden');
+            loanModal.classList.add('flex');
+            setTimeout(() => loanModal.querySelector('.modal').classList.remove('scale-95'), 10);
+        };
+        const closeModal = () => {
+            loanModal.querySelector('.modal').classList.add('scale-95');
+            setTimeout(() => {
+                loanModal.classList.add('hidden');
+                loanModal.classList.remove('flex');
+                document.getElementById('loanForm').reset();
+                document.getElementById('loanId').value = '';
+            }, 300);
+        };
+        document.getElementById('addLoanBtn').addEventListener('click', () => {
+            document.getElementById('modalTitle').textContent = 'Add New Loan';
+            openModal();
+        });
+        document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+        loanModal.addEventListener('click', (e) => { if (e.target === loanModal) closeModal(); });
+
+        // --- Mock Data ---
+        const mockLoans = [
+            { id: 1, borrower_name: 'Alice', amount: 5000, status: 'active', due_date: '2025-10-15', total_paid: 1000 },
+            { id: 2, borrower_name: 'Bob', amount: 2000, status: 'paid', due_date: '2025-09-01', total_paid: 2000 },
+            { id: 3, borrower_name: 'Charlie', amount: 10000, status: 'overdue', due_date: '2025-08-20', total_paid: 5000 },
+            { id: 4, borrower_name: 'David', amount: 7500, status: 'active', due_date: null, total_paid: 2500 },
+        ];
+
+        // --- Render Function ---
+        const renderLoanTable = (loans) => {
+            const tableBody = document.getElementById('loanTableBody');
+            const noDataMsg = document.getElementById('noDataMessage');
+
+            if (!loans || loans.length === 0) {
+                tableBody.innerHTML = '';
+                noDataMsg.classList.remove('hidden');
+                return;
+            }
+            
+            noDataMsg.classList.add('hidden');
+            tableBody.innerHTML = loans.map(loan => {
+                const remaining = loan.amount - loan.total_paid;
+                
+                let statusBadge;
+                if (loan.status === 'paid') {
+                    statusBadge = `<span class="px-2 py-1 text-xs font-bold text-green-800 bg-green-200 rounded-full">Paid</span>`;
+                } else if (loan.status === 'overdue') {
+                    statusBadge = `<span class="px-2 py-1 text-xs font-bold text-red-800 bg-red-200 rounded-full">Overdue</span>`;
+                } else {
+                    statusBadge = `<span class="px-2 py-1 text-xs font-bold text-sky-800 bg-sky-200 rounded-full">Active</span>`;
+                }
+
+                return `
+                <tr class="bg-white border-b hover:bg-gray-50">
+                    <th scope="row" class="px-6 py-4 font-bold text-gray-900 whitespace-nowrap">
+                        ${loan.borrower_name}
+                    </th>
+                    <td class="px-6 py-4">
+                        <div class="flex flex-col">
+                            <span class="font-semibold text-gray-700">฿${loan.amount.toLocaleString()}</span>
+                            <span class="text-xs text-gray-500">Rem: ฿${remaining.toLocaleString()}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">${statusBadge}</td>
+                    <td class="px-6 py-4">${loan.due_date || 'N/A'}</td>
+                    <td class="px-6 py-4 text-center">
+                        <div class="flex items-center justify-center space-x-2">
+                           <button class="text-gray-400 hover:text-blue-500 p-2 rounded-full hover:bg-blue-100" title="Edit">
+                               <i class="ph ph-pencil-simple text-xl"></i>
+                           </button>
+                           <button class="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-100" title="Delete">
+                               <i class="ph ph-trash text-xl"></i>
+                           </button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        };
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderLoanTable(mockLoans);
+            document.getElementById('userFullName').textContent = 'Ploy';
+        });
+
+        // --- Form Submission ---
+        document.getElementById('loanForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const loanData = { /* ... get form data ... */ };
+            console.log('Submitting loan data:', loanData);
+            closeModal();
+            // TODO: API call and re-render table
+        });
+        
+        // --- Logout Logic ---
+        document.getElementById('logoutButton').addEventListener('click', () => {
+            console.log('Logging out...');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
+
