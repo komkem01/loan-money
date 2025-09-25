@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/Icon/image.png"/>
     <title>payment - Loan Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -130,6 +131,24 @@
                                     <p class="text-gray-500 mt-4">No transactions found.</p>
                                 </div>
                             </div>
+                            
+                            <!-- Pagination for Transactions -->
+                            <div id="transactionPaginationContainer" class="hidden mt-6 flex items-center justify-between">
+                                <div class="text-sm text-gray-700">
+                                    Showing <span id="transactionStartItem">1</span> to <span id="transactionEndItem">10</span> of <span id="transactionTotalItems">0</span> transactions
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button id="transactionPrevBtn" class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i class="ph-caret-left"></i> Previous
+                                    </button>
+                                    <div id="transactionPageNumbers" class="flex space-x-1">
+                                        <!-- Page numbers will be inserted here -->
+                                    </div>
+                                    <button id="transactionNextBtn" class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        Next <i class="ph-caret-right"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -154,7 +173,19 @@
             { id: 101, loan_id: 1, borrower_name: 'Alice', amount: 500, created_at: '2025-09-25', remark: 'คืนงวดแรก' },
             { id: 102, loan_id: 3, borrower_name: 'Charlie', amount: 2000, created_at: '2025-09-24', remark: '' },
             { id: 103, loan_id: 4, borrower_name: 'David', amount: 1000, created_at: '2025-09-23', remark: 'ค่าอาหาร' },
+            { id: 104, loan_id: 1, borrower_name: 'Alice', amount: 800, created_at: '2025-09-22', remark: 'ค่าใช้จ่าย' },
+            { id: 105, loan_id: 5, borrower_name: 'Emma', amount: 300, created_at: '2025-09-21', remark: 'ค่าขนม' },
+            { id: 106, loan_id: 6, borrower_name: 'Frank', amount: 1500, created_at: '2025-09-20', remark: 'งวดที่ 1' },
+            { id: 107, loan_id: 8, borrower_name: 'Henry', amount: 600, created_at: '2025-09-19', remark: '' },
+            { id: 108, loan_id: 9, borrower_name: 'Ivy', amount: 400, created_at: '2025-09-18', remark: 'ค่าน้ำมัน' },
+            { id: 109, loan_id: 10, borrower_name: 'Jack', amount: 2500, created_at: '2025-09-17', remark: 'งวดที่ 2' },
+            { id: 110, loan_id: 12, borrower_name: 'Liam', amount: 1200, created_at: '2025-09-16', remark: 'ค่าเสื้อผ้า' },
         ];
+
+        // --- Pagination Variables for Transactions ---
+        let transactionCurrentPage = 1;
+        const transactionsPerPage = 5;
+        let filteredTransactions = [...mockTransactions];
 
         // --- Populate Loan Select Options ---
         const populateLoanSelect = (loans) => {
@@ -165,6 +196,75 @@
                 .join('');
         };
         
+        // --- Transaction Pagination Functions ---
+        const updateTransactionPaginationInfo = () => {
+            const totalItems = filteredTransactions.length;
+            const startItem = totalItems === 0 ? 0 : (transactionCurrentPage - 1) * transactionsPerPage + 1;
+            const endItem = Math.min(transactionCurrentPage * transactionsPerPage, totalItems);
+            
+            document.getElementById('transactionStartItem').textContent = startItem;
+            document.getElementById('transactionEndItem').textContent = endItem;
+            document.getElementById('transactionTotalItems').textContent = totalItems;
+        };
+
+        const renderTransactionPagination = () => {
+            const totalItems = filteredTransactions.length;
+            const totalPages = Math.ceil(totalItems / transactionsPerPage);
+            const paginationContainer = document.getElementById('transactionPaginationContainer');
+            const pageNumbers = document.getElementById('transactionPageNumbers');
+            const prevBtn = document.getElementById('transactionPrevBtn');
+            const nextBtn = document.getElementById('transactionNextBtn');
+
+            if (totalPages <= 1) {
+                paginationContainer.classList.add('hidden');
+                return;
+            }
+
+            paginationContainer.classList.remove('hidden');
+
+            // Update Previous/Next buttons
+            prevBtn.disabled = transactionCurrentPage === 1;
+            nextBtn.disabled = transactionCurrentPage === totalPages;
+
+            // Generate page numbers
+            pageNumbers.innerHTML = '';
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, transactionCurrentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `px-3 py-2 text-sm border rounded-lg ${
+                    i === transactionCurrentPage 
+                        ? 'bg-emerald-500 text-white border-emerald-500' 
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`;
+                pageBtn.textContent = i;
+                pageBtn.addEventListener('click', () => goToTransactionPage(i));
+                pageNumbers.appendChild(pageBtn);
+            }
+
+            updateTransactionPaginationInfo();
+        };
+
+        const goToTransactionPage = (page) => {
+            transactionCurrentPage = page;
+            renderTransactionCurrentPage();
+        };
+
+        const renderTransactionCurrentPage = () => {
+            const startIndex = (transactionCurrentPage - 1) * transactionsPerPage;
+            const endIndex = startIndex + transactionsPerPage;
+            const currentPageData = filteredTransactions.slice(startIndex, endIndex);
+            
+            renderTransactions(currentPageData);
+            renderTransactionPagination();
+        };
+
         // --- Render Transactions Table ---
         const renderTransactions = (transactions) => {
             const tableBody = document.getElementById('transactionTableBody');
@@ -173,6 +273,7 @@
             if (!transactions || transactions.length === 0) {
                 tableBody.innerHTML = '';
                 noDataMsg.classList.remove('hidden');
+                document.getElementById('transactionPaginationContainer').classList.add('hidden');
                 return;
             }
             
@@ -197,7 +298,25 @@
 
             // Populate data
             populateLoanSelect(mockLoans);
-            renderTransactions(mockTransactions);
+            
+            // Initialize transactions with pagination
+            filteredTransactions = [...mockTransactions];
+            transactionCurrentPage = 1;
+            renderTransactionCurrentPage();
+
+            // Add event listeners for transaction pagination buttons
+            document.getElementById('transactionPrevBtn').addEventListener('click', () => {
+                if (transactionCurrentPage > 1) {
+                    goToTransactionPage(transactionCurrentPage - 1);
+                }
+            });
+
+            document.getElementById('transactionNextBtn').addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
+                if (transactionCurrentPage < totalPages) {
+                    goToTransactionPage(transactionCurrentPage + 1);
+                }
+            });
         });
         
         // --- Form Submission ---

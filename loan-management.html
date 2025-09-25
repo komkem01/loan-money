@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/Icon/image.png"/>
     <title>management - Loan Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -109,6 +110,24 @@
                         <i class="ph-files text-6xl text-gray-300"></i>
                         <p class="text-gray-500 mt-4">No loans found. Add one to get started!</p>
                     </div>
+
+                    <!-- Pagination -->
+                    <div id="paginationContainer" class="hidden mt-6 flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            Showing <span id="startItem">1</span> to <span id="endItem">10</span> of <span id="totalItems">0</span> results
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="prevBtn" class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="ph-caret-left"></i> Previous
+                            </button>
+                            <div id="pageNumbers" class="flex space-x-1">
+                                <!-- Page numbers will be inserted here -->
+                            </div>
+                            <button id="nextBtn" class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Next <i class="ph-caret-right"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
@@ -177,13 +196,95 @@
         document.getElementById('closeModalBtn').addEventListener('click', closeModal);
         loanModal.addEventListener('click', (e) => { if (e.target === loanModal) closeModal(); });
 
-        // --- Mock Data ---
+        // --- Mock Data with More Entries for Testing Pagination ---
         const mockLoans = [
             { id: 1, borrower_name: 'Alice', amount: 5000, status: 'active', due_date: '2025-10-15', total_paid: 1000 },
             { id: 2, borrower_name: 'Bob', amount: 2000, status: 'paid', due_date: '2025-09-01', total_paid: 2000 },
             { id: 3, borrower_name: 'Charlie', amount: 10000, status: 'overdue', due_date: '2025-08-20', total_paid: 5000 },
             { id: 4, borrower_name: 'David', amount: 7500, status: 'active', due_date: null, total_paid: 2500 },
+            { id: 5, borrower_name: 'Emma', amount: 3000, status: 'active', due_date: '2025-11-01', total_paid: 500 },
+            { id: 6, borrower_name: 'Frank', amount: 8000, status: 'overdue', due_date: '2025-08-15', total_paid: 2000 },
+            { id: 7, borrower_name: 'Grace', amount: 4500, status: 'paid', due_date: '2025-09-10', total_paid: 4500 },
+            { id: 8, borrower_name: 'Henry', amount: 6000, status: 'active', due_date: '2025-12-01', total_paid: 1500 },
+            { id: 9, borrower_name: 'Ivy', amount: 2500, status: 'active', due_date: '2025-10-30', total_paid: 800 },
+            { id: 10, borrower_name: 'Jack', amount: 9000, status: 'overdue', due_date: '2025-07-20', total_paid: 3000 },
+            { id: 11, borrower_name: 'Kate', amount: 1500, status: 'paid', due_date: '2025-08-30', total_paid: 1500 },
+            { id: 12, borrower_name: 'Liam', amount: 7200, status: 'active', due_date: '2025-11-15', total_paid: 2400 },
         ];
+
+        // --- Pagination Variables ---
+        let currentPage = 1;
+        const itemsPerPage = 5;
+        let filteredLoans = [...mockLoans];
+
+        // --- Pagination Functions ---
+        const updatePaginationInfo = () => {
+            const totalItems = filteredLoans.length;
+            const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+            const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+            
+            document.getElementById('startItem').textContent = startItem;
+            document.getElementById('endItem').textContent = endItem;
+            document.getElementById('totalItems').textContent = totalItems;
+        };
+
+        const renderPagination = () => {
+            const totalItems = filteredLoans.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const paginationContainer = document.getElementById('paginationContainer');
+            const pageNumbers = document.getElementById('pageNumbers');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            if (totalPages <= 1) {
+                paginationContainer.classList.add('hidden');
+                return;
+            }
+
+            paginationContainer.classList.remove('hidden');
+
+            // Update Previous/Next buttons
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+
+            // Generate page numbers
+            pageNumbers.innerHTML = '';
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `px-3 py-2 text-sm border rounded-lg ${
+                    i === currentPage 
+                        ? 'bg-emerald-500 text-white border-emerald-500' 
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`;
+                pageBtn.textContent = i;
+                pageBtn.addEventListener('click', () => goToPage(i));
+                pageNumbers.appendChild(pageBtn);
+            }
+
+            updatePaginationInfo();
+        };
+
+        const goToPage = (page) => {
+            currentPage = page;
+            renderCurrentPage();
+        };
+
+        const renderCurrentPage = () => {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentPageData = filteredLoans.slice(startIndex, endIndex);
+            
+            renderLoanTable(currentPageData);
+            renderPagination();
+        };
 
         // --- Render Function ---
         const renderLoanTable = (loans) => {
@@ -193,6 +294,7 @@
             if (!loans || loans.length === 0) {
                 tableBody.innerHTML = '';
                 noDataMsg.classList.remove('hidden');
+                document.getElementById('paginationContainer').classList.add('hidden');
                 return;
             }
             
@@ -239,8 +341,24 @@
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            renderLoanTable(mockLoans);
+            filteredLoans = [...mockLoans];
+            currentPage = 1;
+            renderCurrentPage();
             document.getElementById('userFullName').textContent = 'Ploy';
+
+            // Add event listeners for pagination buttons
+            document.getElementById('prevBtn').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    goToPage(currentPage - 1);
+                }
+            });
+
+            document.getElementById('nextBtn').addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredLoans.length / itemsPerPage);
+                if (currentPage < totalPages) {
+                    goToPage(currentPage + 1);
+                }
+            });
         });
 
         // --- Form Submission ---

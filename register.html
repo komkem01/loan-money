@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/Icon/image.png"/>
     <title>Create Account - Loan Tracker</title>
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,6 +16,49 @@
 
         body {
             font-family: 'Nunito', sans-serif;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        /* Success modal animation */
+        .success-icon {
+            animation: checkmark 0.6s ease-in-out;
+        }
+
+        @keyframes checkmark {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Error modal animation */
+        .error-icon {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
     </style>
 </head>
@@ -91,6 +135,43 @@
         </p>
     </div>
 
+    <!-- Success Modal -->
+    <div id="successModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="modal-content bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl">
+            <div class="success-icon mb-4">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                    <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">สมัครสมาชิกสำเร็จ!</h3>
+            <p class="text-gray-600 mb-6">ยินดีต้อนรับสู่ระบบ กำลังนำท่านไปยังหน้าล็อกอิน...</p>
+            <div class="flex justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="modal-content bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl">
+            <div class="error-icon mb-4">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">สมัครสมาชิกไม่สำเร็จ</h3>
+            <p id="errorMessage" class="text-gray-600 mb-6">กรุณาตรวจสอบข้อมูลและลองอีกครั้ง</p>
+            <button onclick="closeErrorModal()" 
+                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-xl transition duration-300">
+                ลองอีกครั้ง
+            </button>
+        </div>
+    </div>
+
     <script>
         const registerForm = document.getElementById('registerForm');
         const messageDiv = document.getElementById('message');
@@ -107,26 +188,106 @@
             toggleIcon.classList.toggle('ph-eye-slash');
         });
 
+        // --- Modal Functions ---
+        function showSuccessModal() {
+            const modal = document.getElementById('successModal');
+            modal.classList.add('show');
+        }
+
+        function showErrorModal(message = 'กรุณาตรวจสอบข้อมูลและลองอีกครั้ง') {
+            const modal = document.getElementById('errorModal');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            modal.classList.add('show');
+        }
+
+        function closeErrorModal() {
+            const modal = document.getElementById('errorModal');
+            modal.classList.remove('show');
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            modal.classList.remove('show');
+        }
+
+        // Close modals when clicking outside
+        document.getElementById('successModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeSuccessModal();
+            }
+        });
+
+        document.getElementById('errorModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeErrorModal();
+            }
+        });
+
         // --- Form Submission Logic ---
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             messageDiv.textContent = '';
 
-            const fullName = document.getElementById('fullName').value;
-            const username = document.getElementById('username').value;
+            const fullName = document.getElementById('fullName').value.trim();
+            const username = document.getElementById('username').value.trim();
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
 
-            // --- Basic Validation ---
+            // --- Enhanced Validation ---
+            if (!fullName || !username || !password || !confirmPassword) {
+                showErrorModal('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+                return;
+            }
+
+            if (fullName.length < 2) {
+                showErrorModal('ชื่อเต็มต้องมีอย่างน้อย 2 ตัวอักษร');
+                return;
+            }
+
+            if (username.length < 3) {
+                showErrorModal('ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร');
+                return;
+            }
+
+            if (password.length < 6) {
+                showErrorModal('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+                return;
+            }
+
             if (password !== confirmPassword) {
-                messageDiv.textContent = 'Passwords do not match!';
-                messageDiv.className = 'text-sm text-center font-semibold text-red-500';
+                showErrorModal('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
+                return;
+            }
+
+            // Check for special characters in username
+            const usernameRegex = /^[a-zA-Z0-9_]+$/;
+            if (!usernameRegex.test(username)) {
+                showErrorModal('ชื่อผู้ใช้สามารถใช้ได้เฉพาะตัวอักษร ตัวเลข และ _');
                 return;
             }
 
             console.log('Attempting to register with:', { fullName, username, password });
 
             try {
+                // Simulate API call with timeout
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // For demonstration purposes - simulate different scenarios:
+                if (username === 'admin' || username === 'root' || username === 'administrator') {
+                    showErrorModal('ชื่อผู้ใช้นี้ถูกสงวนไว้ กรุณาเลือกชื่อผู้ใช้อื่น');
+                } else if (username === 'testuser') {
+                    showErrorModal('ชื่อผู้ใช้นี้มีอยู่ในระบบแล้ว กรุณาเลือกชื่อผู้ใช้อื่น');
+                } else {
+                    // Success case
+                    showSuccessModal();
+                    
+                    setTimeout(() => {
+                        closeSuccessModal();
+                        window.location.href = './index.html';
+                    }, 2500);
+                }
+
                 // --- TODO: API Call ---
                 // This is where you will send the data to your Go backend.
                 // The endpoint might be something like '/api/register'
@@ -138,29 +299,20 @@
                 });
 
                 if (response.ok) {
-                    messageDiv.textContent = 'Registration successful! Redirecting to login...';
-                    messageDiv.className = 'text-sm text-center font-semibold text-green-500';
+                    showSuccessModal();
                     setTimeout(() => {
+                        closeSuccessModal();
                         window.location.href = './index.html';
-                    }, 2000);
+                    }, 2500);
                 } else {
                     const errorData = await response.json();
-                    messageDiv.textContent = errorData.error || 'Registration failed.';
-                    messageDiv.className = 'text-sm text-center font-semibold text-red-500';
+                    showErrorModal(errorData.error || 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
                 }
                 */
 
-                // For demonstration purposes:
-                messageDiv.textContent = 'Registration successful! Please login.';
-                messageDiv.className = 'text-sm text-center font-semibold text-green-500';
-                setTimeout(() => {
-                    window.location.href = './index.html';
-                }, 2000);
-
             } catch (error) {
                 console.error('Registration failed:', error);
-                messageDiv.textContent = 'An error occurred. Please try again.';
-                messageDiv.className = 'text-sm text-center font-semibold text-red-500';
+                showErrorModal('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองอีกครั้ง');
             }
         });
     </script>

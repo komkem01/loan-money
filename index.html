@@ -34,6 +34,49 @@
                 transform: scale(1.05);
             }
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        /* Success modal animation */
+        .success-icon {
+            animation: checkmark 0.6s ease-in-out;
+        }
+
+        @keyframes checkmark {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Error modal animation */
+        .error-icon {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
     </style>
 </head>
 
@@ -93,6 +136,43 @@
         </p>
     </div>
 
+    <!-- Success Modal -->
+    <div id="successModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="modal-content bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl">
+            <div class="success-icon mb-4">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                    <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">เข้าสู่ระบบสำเร็จ!</h3>
+            <p class="text-gray-600 mb-6">ยินดีต้อนรับกลับ กำลังนำท่านไปยังหน้าหลัก...</p>
+            <div class="flex justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="modal-content bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl">
+            <div class="error-icon mb-4">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">เข้าสู่ระบบไม่สำเร็จ</h3>
+            <p id="errorMessage" class="text-gray-600 mb-6">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</p>
+            <button onclick="closeErrorModal()" 
+                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-xl transition duration-300">
+                ลองอีกครั้ง
+            </button>
+        </div>
+    </div>
+
     <script>
         const loginForm = document.getElementById('loginForm');
         const messageDiv = document.getElementById('message');
@@ -108,33 +188,100 @@
             toggleIcon.classList.toggle('ph-eye-slash');
         });
 
+        // --- Modal Functions ---
+        function showSuccessModal() {
+            const modal = document.getElementById('successModal');
+            modal.classList.add('show');
+        }
+
+        function showErrorModal(message = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง') {
+            const modal = document.getElementById('errorModal');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            modal.classList.add('show');
+        }
+
+        function closeErrorModal() {
+            const modal = document.getElementById('errorModal');
+            modal.classList.remove('show');
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            modal.classList.remove('show');
+        }
+
+        // Close modals when clicking outside
+        document.getElementById('successModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeSuccessModal();
+            }
+        });
+
+        document.getElementById('errorModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeErrorModal();
+            }
+        });
+
         // --- Form Submission Logic ---
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             messageDiv.textContent = '';
 
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = passwordInput.value;
 
             console.log('Attempting to log in with:', { username, password });
 
+            // Basic validation
+            if (!username || !password) {
+                showErrorModal('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
+                return;
+            }
+
             try {
                 // --- TODO: API Call ---
                 // Replace this with your actual API call to the Go backend
-
-                // For demonstration purposes:
-                messageDiv.textContent = 'Login successful! Redirecting...';
-                messageDiv.className = 'text-sm text-center font-semibold text-green-500';
-
-                setTimeout(() => {
-                    alert('Redirecting to dashboard...');
-                    // window.location.href = '/dashboard.html';
-                }, 1500);
+                
+                // Simulate API call with timeout
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // For demonstration purposes - simulate different scenarios:
+                if (username === 'admin' && password === 'admin123') {
+                    // Success case
+                    showSuccessModal();
+                    
+                    setTimeout(() => {
+                        closeSuccessModal();
+                        // window.location.href = '/dashboard.html';
+                        alert('นำท่านไปยังหน้า Dashboard'); // Remove this when implementing real navigation
+                    }, 2000);
+                    
+                } else if (username === 'demo' && password === 'demo123') {
+                    // Another success case
+                    showSuccessModal();
+                    
+                    setTimeout(() => {
+                        closeSuccessModal();
+                        // window.location.href = '/dashboard.html';
+                        alert('นำท่านไปยังหน้า Dashboard'); // Remove this when implementing real navigation
+                    }, 2000);
+                    
+                } else {
+                    // Error cases
+                    if (username.length < 3) {
+                        showErrorModal('ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร');
+                    } else if (password.length < 6) {
+                        showErrorModal('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+                    } else {
+                        showErrorModal('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                    }
+                }
 
             } catch (error) {
                 console.error('Login failed:', error);
-                messageDiv.textContent = 'An error occurred. Please try again.';
-                messageDiv.className = 'text-sm text-center font-semibold text-red-500';
+                showErrorModal('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองอีกครั้ง');
             }
         });
     </script>
