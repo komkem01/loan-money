@@ -207,6 +207,179 @@
 
 
     <script>
+        // Token Management System
+        const AuthManager = {
+            // Save JWT token to localStorage with timestamp
+            saveToken(token) {
+                const tokenData = {
+                    token: token,
+                    timestamp: Date.now(),
+                    expiresIn: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+                };
+                localStorage.setItem('loan_money_token', JSON.stringify(tokenData));
+                console.log('Token saved with expiry:', new Date(Date.now() + tokenData.expiresIn));
+            },
+
+            // Get JWT token from localStorage and check if valid
+            getToken() {
+                try {
+                    const tokenData = localStorage.getItem('loan_money_token');
+                    if (!tokenData) return null;
+                    
+                    const parsed = JSON.parse(tokenData);
+                    const now = Date.now();
+                    const tokenAge = now - parsed.timestamp;
+                    
+                    // Check if token is expired (24 hours)
+                    if (tokenAge > parsed.expiresIn) {
+                        console.log('Token expired, removing...');
+                        this.removeToken();
+                        this.redirectToLogin();
+                        return null;
+                    }
+                    
+                    return parsed.token;
+                } catch (error) {
+                    console.error('Error parsing token:', error);
+                    this.removeToken();
+                    return null;
+                }
+            },
+
+            // Remove JWT token and all user data
+            removeToken() {
+                localStorage.removeItem('loan_money_token');
+                localStorage.removeItem('loan_money_user');
+                console.log('All tokens and user data cleared');
+            },
+
+            // Save user information
+            saveUser(user) {
+                localStorage.setItem('loan_money_user', JSON.stringify(user));
+            },
+
+            // Get user information
+            getUser() {
+                try {
+                    const user = localStorage.getItem('loan_money_user');
+                    return user ? JSON.parse(user) : null;
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    return null;
+                }
+            },
+
+            // Check if user is authenticated with valid token
+            isAuthenticated() {
+                const token = this.getToken();
+                const user = this.getUser();
+                return !!(token && user);
+            },
+
+            // Redirect to login if not authenticated
+            requireAuth() {
+                if (!this.isAuthenticated()) {
+                    this.redirectToLogin();
+                    return false;
+                }
+                return true;
+            },
+
+            // Redirect to login page
+            redirectToLogin() {
+                window.location.href = '/index.html';
+            },
+
+            // Complete logout - clear all data and redirect
+            logout() {
+                this.removeToken();
+                this.redirectToLogin();
+            },
+
+            // Get authorization headers for API calls
+            getAuthHeaders() {
+                const token = this.getToken();
+                return token ? { 'Authorization': `Bearer ${token}` } : {};
+            },
+
+            // Check token expiry and auto-logout if needed
+            checkTokenExpiry() {
+                const tokenData = localStorage.getItem('loan_money_token');
+                if (tokenData) {
+                    try {
+                        const parsed = JSON.parse(tokenData);
+                        const now = Date.now();
+                        const tokenAge = now - parsed.timestamp;
+                        
+                        // If token expires in less than 1 hour, show warning
+                        const oneHour = 60 * 60 * 1000;
+                        if (tokenAge > (parsed.expiresIn - oneHour)) {
+                            console.warn('Token expires soon');
+                        }
+                        
+                        // If expired, show message first then logout
+                        if (tokenAge > parsed.expiresIn) {
+                            console.log('Token expired, logging out...');
+                            
+                            // Show expiry message before redirect
+                            if (typeof showMessage === 'function') {
+                                showMessage('⏰ เซสชันหมดอายุแล้ว กำลังนำท่านกลับสู่หน้าเข้าสู่ระบบ...', true);
+                            }
+                            
+                            // Delay logout to let user see the message
+                            setTimeout(() => {
+                                this.removeToken();
+                                this.redirectToLogin();
+                            }, 30000);
+                        }
+                    } catch (error) {
+                        console.error('Error checking token expiry:', error);
+                        this.removeToken();
+                    }
+                }
+            }
+        };
+
+        // Message display function for dashboard
+        function showMessage(message, isError = false) {
+            // Create a message element if it doesn't exist
+            let messageDiv = document.getElementById('dashboardMessage');
+            if (!messageDiv) {
+                messageDiv = document.createElement('div');
+                messageDiv.id = 'dashboardMessage';
+                messageDiv.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md';
+                document.body.appendChild(messageDiv);
+            }
+            
+            messageDiv.textContent = message;
+            messageDiv.className = isError 
+                ? 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md bg-red-100 border border-red-300 text-red-700'
+                : 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md bg-green-100 border border-green-300 text-green-700';
+            
+            messageDiv.style.display = 'block';
+            
+            // Hide message after 3 seconds
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Check authentication on page load
+        if (!AuthManager.requireAuth()) {
+            // Will redirect to login if not authenticated
+        }
+
+        // Set up periodic token expiry check (every minute)
+        setInterval(() => {
+            AuthManager.checkTokenExpiry();
+        }, 60000);
+
+        // Display user information if available
+        const user = AuthManager.getUser();
+        if (user && document.getElementById('userFullName')) {
+            document.getElementById('userFullName').textContent = user.full_name || user.username || 'User';
+        }
+
         // --- Sidebar Toggle Logic ---
         const menuBtn = document.getElementById('menuBtn');
         const sidebar = document.getElementById('sidebar');
@@ -432,7 +605,7 @@
         
         logoutButton.addEventListener('click', () => {
             console.log('Logging out...');
-            window.location.href = 'index.html';
+            AuthManager.logout();
         });
 
     </script>

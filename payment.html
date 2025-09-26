@@ -157,6 +157,135 @@
     </div>
     
     <script>
+        // Token Management System
+        const AuthManager = {
+            getToken() {
+                try {
+                    const tokenData = localStorage.getItem('loan_money_token');
+                    if (!tokenData) return null;
+                    
+                    const parsed = JSON.parse(tokenData);
+                    const now = Date.now();
+                    const tokenAge = now - parsed.timestamp;
+                    
+                    if (tokenAge > parsed.expiresIn) {
+                        console.log('Token expired, removing...');
+                        this.removeToken();
+                        this.redirectToLogin();
+                        return null;
+                    }
+                    
+                    return parsed.token;
+                } catch (error) {
+                    console.error('Error parsing token:', error);
+                    this.removeToken();
+                    return null;
+                }
+            },
+
+            removeToken() {
+                localStorage.removeItem('loan_money_token');
+                localStorage.removeItem('loan_money_user');
+                console.log('All tokens and user data cleared');
+            },
+
+            getUser() {
+                try {
+                    const user = localStorage.getItem('loan_money_user');
+                    return user ? JSON.parse(user) : null;
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    return null;
+                }
+            },
+
+            isAuthenticated() {
+                const token = this.getToken();
+                const user = this.getUser();
+                return !!(token && user);
+            },
+
+            requireAuth() {
+                if (!this.isAuthenticated()) {
+                    this.redirectToLogin();
+                    return false;
+                }
+                return true;
+            },
+
+            redirectToLogin() {
+                window.location.href = '/index.html';
+            },
+
+            logout() {
+                this.removeToken();
+                this.redirectToLogin();
+            },
+
+            checkTokenExpiry() {
+                const tokenData = localStorage.getItem('loan_money_token');
+                if (tokenData) {
+                    try {
+                        const parsed = JSON.parse(tokenData);
+                        const now = Date.now();
+                        const tokenAge = now - parsed.timestamp;
+                        
+                        if (tokenAge > parsed.expiresIn) {
+                            console.log('Token expired, logging out...');
+                            
+                            // Show expiry message before redirect
+                            if (typeof showMessage === 'function') {
+                                showMessage('⏰ เซสชันหมดอายุแล้ว กำลังนำท่านกลับสู่หน้าเข้าสู่ระบบ...', true);
+                            }
+                            
+                            // Delay logout to let user see the message
+                            setTimeout(() => {
+                                this.removeToken();
+                                this.redirectToLogin();
+                            }, 30000);
+                        }
+                    } catch (error) {
+                        console.error('Error checking token expiry:', error);
+                        this.removeToken();
+                    }
+                }
+            }
+        };
+
+        // Message display function
+        function showMessage(message, isError = false) {
+            // Create a message element if it doesn't exist
+            let messageDiv = document.getElementById('pageMessage');
+            if (!messageDiv) {
+                messageDiv = document.createElement('div');
+                messageDiv.id = 'pageMessage';
+                messageDiv.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md';
+                document.body.appendChild(messageDiv);
+            }
+            
+            messageDiv.textContent = message;
+            messageDiv.className = isError 
+                ? 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md bg-red-100 border border-red-300 text-red-700'
+                : 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md bg-green-100 border border-green-300 text-green-700';
+            
+            messageDiv.style.display = 'block';
+            
+            // Hide message after 3 seconds
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Check authentication on page load
+        if (!AuthManager.requireAuth()) {
+            // Will redirect to login if not authenticated
+        }
+
+        // Set up periodic token expiry check
+        setInterval(() => {
+            AuthManager.checkTokenExpiry();
+        }, 60000);
+
         // --- Sidebar Toggle ---
         document.getElementById('menuBtn').addEventListener('click', () => {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
@@ -338,7 +467,7 @@
         // --- Logout Logic ---
         document.getElementById('logoutButton').addEventListener('click', () => {
             console.log('Logging out...');
-            window.location.href = 'index.html';
+            AuthManager.logout();
         });
     </script>
 </body>

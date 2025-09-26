@@ -10,6 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Phosphor Icons for the eye icon -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Authentication utilities will be embedded below -->
     <style>
         /* Custom font from Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
@@ -18,48 +19,7 @@
             font-family: 'Nunito', sans-serif;
         }
 
-        /* Modal Styles */
-        .modal {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
 
-        .modal.show {
-            display: flex;
-            opacity: 1;
-        }
-
-        .modal-content {
-            transform: translateY(-20px);
-            transition: transform 0.3s ease;
-        }
-
-        .modal.show .modal-content {
-            transform: translateY(0);
-        }
-
-        /* Success modal animation */
-        .success-icon {
-            animation: checkmark 0.6s ease-in-out;
-        }
-
-        @keyframes checkmark {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        /* Error modal animation */
-        .error-icon {
-            animation: shake 0.5s ease-in-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
     </style>
 </head>
 
@@ -93,7 +53,7 @@
                 <label for="username" class="text-sm font-semibold block mb-2 text-gray-600">Username</label>
                 <input type="text" id="username" name="username"
                     class="w-full p-3 bg-gray-50/70 border border-gray-300 rounded-xl text-gray-800 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                    placeholder="your_username" required>
+                    placeholder="username" required>
             </div>
 
             <!-- Password Input -->
@@ -135,185 +95,517 @@
         </p>
     </div>
 
-    <!-- Success Modal -->
-    <div id="successModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="modal-content bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl">
-            <div class="success-icon mb-4">
-                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                    <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                </div>
-            </div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">สมัครสมาชิกสำเร็จ!</h3>
-            <p class="text-gray-600 mb-6">ยินดีต้อนรับสู่ระบบ กำลังนำท่านไปยังหน้าล็อกอิน...</p>
-            <div class="flex justify-center">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Error Modal -->
-    <div id="errorModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="modal-content bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl">
-            <div class="error-icon mb-4">
-                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </div>
-            </div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">สมัครสมาชิกไม่สำเร็จ</h3>
-            <p id="errorMessage" class="text-gray-600 mb-6">กรุณาตรวจสอบข้อมูลและลองอีกครั้ง</p>
-            <button onclick="closeErrorModal()" 
-                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-xl transition duration-300">
-                ลองอีกครั้ง
-            </button>
-        </div>
-    </div>
 
     <script>
-        const registerForm = document.getElementById('registerForm');
-        const messageDiv = document.getElementById('message');
-        const passwordInput = document.getElementById('password');
-        const confirmPasswordInput = document.getElementById('confirmPassword');
-        const togglePasswordButton = document.getElementById('togglePassword');
-        const toggleIcon = togglePasswordButton.querySelector('i');
+        // Authentication utilities for Loan Money App
+        const API_BASE_URL = 'http://localhost:8080/api/v1';
+
+        // Token Management
+        const AuthManager = {
+            // Save JWT token to localStorage with timestamp
+            saveToken(token) {
+                const tokenData = {
+                    token: token,
+                    timestamp: Date.now(),
+                    expiresIn: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+                };
+                localStorage.setItem('loan_money_token', JSON.stringify(tokenData));
+                console.log('Token saved with expiry:', new Date(Date.now() + tokenData.expiresIn));
+            },
+
+            // Get JWT token from localStorage and check if valid
+            getToken() {
+                try {
+                    const tokenData = localStorage.getItem('loan_money_token');
+                    if (!tokenData) return null;
+                    
+                    const parsed = JSON.parse(tokenData);
+                    const now = Date.now();
+                    const tokenAge = now - parsed.timestamp;
+                    
+                    // Check if token is expired (24 hours)
+                    if (tokenAge > parsed.expiresIn) {
+                        console.log('Token expired, removing...');
+                        this.removeToken();
+                        this.redirectToLogin();
+                        return null;
+                    }
+                    
+                    return parsed.token;
+                } catch (error) {
+                    console.error('Error parsing token:', error);
+                    this.removeToken();
+                    return null;
+                }
+            },
+
+            // Remove JWT token and all user data
+            removeToken() {
+                localStorage.removeItem('loan_money_token');
+                localStorage.removeItem('loan_money_user');
+                console.log('All tokens and user data cleared');
+            },
+
+            // Save user information
+            saveUser(user) {
+                localStorage.setItem('loan_money_user', JSON.stringify(user));
+            },
+
+            // Get user information
+            getUser() {
+                try {
+                    const user = localStorage.getItem('loan_money_user');
+                    return user ? JSON.parse(user) : null;
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    return null;
+                }
+            },
+
+            // Check if user is authenticated with valid token (without side effects)
+            isAuthenticated() {
+                try {
+                    const tokenData = localStorage.getItem('loan_money_token');
+                    if (!tokenData) return false;
+                    
+                    const parsed = JSON.parse(tokenData);
+                    const user = localStorage.getItem('loan_money_user');
+                    if (!user) return false;
+                    
+                    const now = Date.now();
+                    const tokenAge = now - parsed.timestamp;
+                    
+                    // Just check validity without removing expired tokens
+                    return tokenAge <= parsed.expiresIn;
+                } catch (error) {
+                    return false;
+                }
+            },
+
+            // Redirect to login if not authenticated
+            requireAuth() {
+                if (!this.isAuthenticated()) {
+                    this.redirectToLogin();
+                    return false;
+                }
+                return true;
+            },
+
+            // Redirect to login page
+            redirectToLogin() {
+                window.location.href = '/index.html';
+            },
+
+            // Redirect to dashboard if already authenticated (but delay check)  
+            redirectIfAuthenticated() {
+                // Add delay to prevent immediate redirect on page load
+                setTimeout(() => {
+                    if (this.isAuthenticated()) {
+                        console.log('User already authenticated, redirecting to dashboard...');
+                        window.location.href = '/dashboard.html';
+                    }
+                }, 500); // 500ms delay
+            },
+
+            // Complete logout - clear all data and redirect
+            logout() {
+                this.removeToken();
+                this.redirectToLogin();
+            },
+
+            // Get authorization headers for API calls
+            getAuthHeaders() {
+                const token = this.getToken();
+                return token ? { 'Authorization': `Bearer ${token}` } : {};
+            },
+
+            // Check token expiry and auto-logout if needed
+            checkTokenExpiry() {
+                const tokenData = localStorage.getItem('loan_money_token');
+                if (tokenData) {
+                    try {
+                        const parsed = JSON.parse(tokenData);
+                        const now = Date.now();
+                        const tokenAge = now - parsed.timestamp;
+                        
+                        // If token expires in less than 1 hour, show warning
+                        const oneHour = 60 * 60 * 1000;
+                        if (tokenAge > (parsed.expiresIn - oneHour)) {
+                            console.warn('Token expires soon');
+                        }
+                        
+                        // If expired, show message first then logout
+                        if (tokenAge > parsed.expiresIn) {
+                            console.log('Token expired, logging out...');
+                            
+                            // Show expiry message before redirect (only if not on login page)
+                            if (window.location.pathname !== '/index.html' && window.location.pathname !== '/register.html') {
+                                // Try to show message if showMessage function exists
+                                if (typeof showMessage === 'function') {
+                                    showMessage('⏰ เซสชันหมดอายุแล้ว กำลังนำท่านกลับสู่หน้าเข้าสู่ระบบ...', true);
+                                }
+                                
+                                // Delay logout to let user see the message
+                                setTimeout(() => {
+                                    this.removeToken();
+                                    this.redirectToLogin();
+                                }, 30000);
+                            } else {
+                                // On login/register page, logout immediately
+                                this.removeToken();
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error checking token expiry:', error);
+                        this.removeToken();
+                    }
+                }
+            }
+        };
+
+        // API Helper functions
+        const ApiHelper = {
+            // Make authenticated API request with token expiry checking
+            async makeRequest(url, options = {}) {
+                // Only check token expiry on protected pages, not login/register
+                if (window.location.pathname !== '/index.html' && window.location.pathname !== '/register.html') {
+                    AuthManager.checkTokenExpiry();
+                }
+                
+                const defaultHeaders = {
+                    'Content-Type': 'application/json',
+                    ...AuthManager.getAuthHeaders()
+                };
+
+                const config = {
+                    headers: defaultHeaders,
+                    ...options
+                };
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}${url}`, config);
+                    const data = await response.json();
+
+                    // Handle unauthorized responses (expired token)
+                    if (response.status === 401) {
+                        console.log('Unauthorized - token expired, logging out...');
+                        AuthManager.logout();
+                        return { success: false, error: 'Session expired. Please login again.' };
+                    }
+
+                    return { success: response.ok, data, status: response.status };
+                } catch (error) {
+                    console.error('API Request failed:', error);
+                    
+                    // If on protected page and not authenticated, logout
+                    if (window.location.pathname !== '/index.html' && window.location.pathname !== '/register.html') {
+                        if (!AuthManager.isAuthenticated()) {
+                            AuthManager.logout();
+                        }
+                    }
+                    
+                    return { 
+                        success: false, 
+                        error: 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต',
+                        status: 0
+                    };
+                }
+            },
+
+            // User registration
+            async register(userData) {
+                return this.makeRequest('/register', {
+                    method: 'POST',
+                    body: JSON.stringify(userData)
+                });
+            },
+
+            // User login
+            async login(credentials) {
+                return this.makeRequest('/login', {
+                    method: 'POST',
+                    body: JSON.stringify(credentials)
+                });
+            },
+
+            // Get user profile
+            async getProfile() {
+                return this.makeRequest('/profile', {
+                    method: 'GET'
+                });
+            },
+
+            // Logout (client-side only for now)
+            logout() {
+                AuthManager.removeToken();
+                window.location.href = '/index.html';
+            }
+        };
+
+        // Form validation utilities
+        const ValidationHelper = {
+            // Validate username
+            validateUsername(username) {
+                if (!username || username.length < 3) {
+                    return 'ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร';
+                }
+                
+                const usernameRegex = /^[a-zA-Z0-9_]+$/;
+                if (!usernameRegex.test(username)) {
+                    return 'ชื่อผู้ใช้สามารถใช้ได้เฉพาะตัวอักษร ตัวเลข และ _';
+                }
+                
+                return null;
+            },
+
+            // Validate password
+            validatePassword(password) {
+                if (!password || password.length < 6) {
+                    return 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+                }
+                return null;
+            },
+
+            // Validate full name
+            validateFullName(fullName) {
+                if (!fullName || fullName.trim().length < 2) {
+                    return 'ชื่อเต็มต้องมีอย่างน้อย 2 ตัวอักษร';
+                }
+                return null;
+            },
+
+            // Validate password confirmation
+            validatePasswordConfirmation(password, confirmPassword) {
+                if (password !== confirmPassword) {
+                    return 'รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน';
+                }
+                return null;
+            }
+        };
+
+        // UI Helper functions
+        const UIHelper = {
+            // Show loading state on button
+            setButtonLoading(button, isLoading, loadingText = 'กำลังดำเนินการ...') {
+                if (isLoading) {
+                    button.dataset.originalText = button.textContent;
+                    button.textContent = loadingText;
+                    button.disabled = true;
+                } else {
+                    button.textContent = button.dataset.originalText || button.textContent;
+                    button.disabled = false;
+                }
+            },
+
+            // Show error message
+            showError(message, duration = 5000) {
+                console.error('Error:', message);
+            },
+
+            // Show success message
+            showSuccess(message, duration = 3000) {
+                console.log('Success:', message);
+            }
+        };
+
+        // === Register Page Specific Code ===
+        let registerForm, messageDiv, passwordInput, confirmPasswordInput, togglePasswordButton, toggleIcon;
+
+        // Initialize elements when DOM is ready
+        function initializeElements() {
+            registerForm = document.getElementById('registerForm');
+            messageDiv = document.getElementById('message');
+            passwordInput = document.getElementById('password');
+            confirmPasswordInput = document.getElementById('confirmPassword');
+            togglePasswordButton = document.getElementById('togglePassword');
+            toggleIcon = togglePasswordButton ? togglePasswordButton.querySelector('i') : null;
+            
+            console.log('Elements initialized:', {
+                registerForm: !!registerForm,
+                messageDiv: !!messageDiv,
+                passwordInput: !!passwordInput,
+                confirmPasswordInput: !!confirmPasswordInput,
+                togglePasswordButton: !!togglePasswordButton,
+                toggleIcon: !!toggleIcon
+            });
+        }
 
         // --- Show/Hide Password Logic ---
-        togglePasswordButton.addEventListener('click', () => {
-            const isPassword = passwordInput.type === 'password';
-            passwordInput.type = isPassword ? 'text' : 'password';
-            toggleIcon.classList.toggle('ph-eye');
-            toggleIcon.classList.toggle('ph-eye-slash');
-        });
-
-        // --- Modal Functions ---
-        function showSuccessModal() {
-            const modal = document.getElementById('successModal');
-            modal.classList.add('show');
-        }
-
-        function showErrorModal(message = 'กรุณาตรวจสอบข้อมูลและลองอีกครั้ง') {
-            const modal = document.getElementById('errorModal');
-            const errorMessage = document.getElementById('errorMessage');
-            errorMessage.textContent = message;
-            modal.classList.add('show');
-        }
-
-        function closeErrorModal() {
-            const modal = document.getElementById('errorModal');
-            modal.classList.remove('show');
-        }
-
-        function closeSuccessModal() {
-            const modal = document.getElementById('successModal');
-            modal.classList.remove('show');
-        }
-
-        // Close modals when clicking outside
-        document.getElementById('successModal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                closeSuccessModal();
+        function setupPasswordToggle() {
+            if (togglePasswordButton && passwordInput && toggleIcon) {
+                console.log('Setting up password toggle');
+                togglePasswordButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Password toggle clicked');
+                    const isPassword = passwordInput.type === 'password';
+                    passwordInput.type = isPassword ? 'text' : 'password';
+                    toggleIcon.classList.toggle('ph-eye');
+                    toggleIcon.classList.toggle('ph-eye-slash');
+                });
+            } else {
+                console.error('Password toggle elements not found:', {
+                    togglePasswordButton: !!togglePasswordButton,
+                    passwordInput: !!passwordInput,
+                    toggleIcon: !!toggleIcon
+                });
             }
-        });
+        }
 
-        document.getElementById('errorModal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                closeErrorModal();
+        // --- Message Display Functions ---
+        function showMessage(message, isError = false) {
+            const messageDiv = document.getElementById('message');
+            if (messageDiv) {
+                messageDiv.textContent = message;
+                messageDiv.className = isError 
+                    ? 'text-sm text-center font-semibold text-red-600' 
+                    : 'text-sm text-center font-semibold text-green-600';
+                
+                // Clear message after 5 seconds
+                setTimeout(() => {
+                    messageDiv.textContent = '';
+                    messageDiv.className = 'text-sm text-center font-semibold';
+                }, 5000);
             }
-        });
+        }
 
         // --- Form Submission Logic ---
-        registerForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            messageDiv.textContent = '';
-
-            const fullName = document.getElementById('fullName').value.trim();
-            const username = document.getElementById('username').value.trim();
-            const password = passwordInput.value;
-            const confirmPassword = confirmPasswordInput.value;
-
-            // --- Enhanced Validation ---
-            if (!fullName || !username || !password || !confirmPassword) {
-                showErrorModal('กรุณากรอกข้อมูลให้ครบทุกช่อง');
-                return;
-            }
-
-            if (fullName.length < 2) {
-                showErrorModal('ชื่อเต็มต้องมีอย่างน้อย 2 ตัวอักษร');
-                return;
-            }
-
-            if (username.length < 3) {
-                showErrorModal('ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร');
-                return;
-            }
-
-            if (password.length < 6) {
-                showErrorModal('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                showErrorModal('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
-                return;
-            }
-
-            // Check for special characters in username
-            const usernameRegex = /^[a-zA-Z0-9_]+$/;
-            if (!usernameRegex.test(username)) {
-                showErrorModal('ชื่อผู้ใช้สามารถใช้ได้เฉพาะตัวอักษร ตัวเลข และ _');
-                return;
-            }
-
-            console.log('Attempting to register with:', { fullName, username, password });
-
-            try {
-                // Simulate API call with timeout
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                // For demonstration purposes - simulate different scenarios:
-                if (username === 'admin' || username === 'root' || username === 'administrator') {
-                    showErrorModal('ชื่อผู้ใช้นี้ถูกสงวนไว้ กรุณาเลือกชื่อผู้ใช้อื่น');
-                } else if (username === 'testuser') {
-                    showErrorModal('ชื่อผู้ใช้นี้มีอยู่ในระบบแล้ว กรุณาเลือกชื่อผู้ใช้อื่น');
-                } else {
-                    // Success case
-                    showSuccessModal();
+        function setupFormSubmission() {
+            if (registerForm) {
+                console.log('Setting up form submission');
+                registerForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    console.log('Form submitted!');
                     
-                    setTimeout(() => {
-                        closeSuccessModal();
-                        window.location.href = './index.html';
-                    }, 2500);
-                }
+                    if (messageDiv) messageDiv.textContent = '';
 
-                // --- TODO: API Call ---
-                // This is where you will send the data to your Go backend.
-                // The endpoint might be something like '/api/register'
-                /*
-                const response = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ full_name: fullName, username, password })
+                    const fullName = document.getElementById('fullName').value.trim();
+                    const username = document.getElementById('username').value.trim();
+                    const password = passwordInput ? passwordInput.value : '';
+                    const confirmPassword = confirmPasswordInput ? confirmPasswordInput.value : '';
+
+                    console.log('Attempting to register with:', { fullName, username, passwordLength: password.length });
+
+                    // --- Enhanced Validation using ValidationHelper ---
+                    if (!fullName || !username || !password || !confirmPassword) {
+                        showMessage('กรุณากรอกข้อมูลให้ครบทุกช่อง', true);
+                        return;
+                    }
+
+                    const fullNameError = ValidationHelper.validateFullName(fullName);
+                    if (fullNameError) {
+                        showMessage(fullNameError, true);
+                        return;
+                    }
+
+                    const usernameError = ValidationHelper.validateUsername(username);
+                    if (usernameError) {
+                        showMessage(usernameError, true);
+                        return;
+                    }
+
+                    const passwordError = ValidationHelper.validatePassword(password);
+                    if (passwordError) {
+                        showMessage(passwordError, true);
+                        return;
+                    }
+
+                    const confirmPasswordError = ValidationHelper.validatePasswordConfirmation(password, confirmPassword);
+                    if (confirmPasswordError) {
+                        showMessage(confirmPasswordError, true);
+                        return;
+                    }
+
+                    // Disable form during submission
+                    const submitButton = registerForm.querySelector('button[type="submit"]');
+                    UIHelper.setButtonLoading(submitButton, true, 'กำลังสมัครสมาชิก...');
+
+                    try {
+                        // Call backend API using ApiHelper
+                        const result = await ApiHelper.register({
+                            username: username,
+                            password: password,
+                            full_name: fullName
+                        });
+
+                        if (result && result.success) {
+                            // Registration successful
+                            console.log('Registration successful:', result.data);
+                            
+                            // Show success message and redirect
+                            showMessage('สมัครสมาชิกสำเร็จ! กำลังนำท่านไปยังหน้าล็อกอิน...', false);
+                            
+                            setTimeout(() => {
+                                window.location.href = './index.html';
+                            }, 2000);
+                            
+                        } else {
+                            // Registration failed
+                            console.error('Registration failed:', result);
+                            
+                            let errorMessage = '❌ เกิดข้อผิดพลาดในการสมัครสมาชิก กรุณาลองใหม่อีกครั้ง';
+                            
+                            if (result?.data?.error || result?.error) {
+                                const error = result.data?.error || result.error;
+                                const lowerError = error.toLowerCase();
+                                
+                                if (lowerError.includes('username') && lowerError.includes('exists')) {
+                                    errorMessage = '❌ ชื่อผู้ใช้นี้มีอยู่ในระบบแล้ว กรุณาเลือกชื่อผู้ใช้อื่น';
+                                } else if (lowerError.includes('username') && lowerError.includes('required')) {
+                                    errorMessage = '❌ กรุณากรอกชื่อผู้ใช้';
+                                } else if (lowerError.includes('password') && lowerError.includes('required')) {
+                                    errorMessage = '❌ กรุณากรอกรหัสผ่าน';
+                                } else if (lowerError.includes('full_name') || lowerError.includes('fullname')) {
+                                    errorMessage = '❌ กรุณากรอกชื่อเต็ม';
+                                } else if (lowerError.includes('username') && lowerError.includes('character')) {
+                                    errorMessage = '❌ ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร';
+                                } else if (lowerError.includes('password') && lowerError.includes('character')) {
+                                    errorMessage = '❌ รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+                                } else if (lowerError.includes('invalid') && lowerError.includes('format')) {
+                                    errorMessage = '❌ ข้อมูลที่กรอกไม่ถูกรูปแบบ กรุณาตรวจสอบอีกครั้ง';
+                                } else {
+                                    errorMessage = `❌ ${error}`;
+                                }
+                            }
+                            
+                            showMessage(errorMessage, true);
+                        }
+
+                    } catch (error) {
+                        console.error('Registration error:', error);
+                        showMessage('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต', true);
+                    } finally {
+                        // Re-enable form
+                        UIHelper.setButtonLoading(submitButton, false);
+                    }
                 });
-
-                if (response.ok) {
-                    showSuccessModal();
-                    setTimeout(() => {
-                        closeSuccessModal();
-                        window.location.href = './index.html';
-                    }, 2500);
-                } else {
-                    const errorData = await response.json();
-                    showErrorModal(errorData.error || 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
+                
+                // Also add click handler to submit button as backup
+                const submitButton = registerForm.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    console.log('Adding backup click handler to submit button');
+                    submitButton.addEventListener('click', (e) => {
+                        console.log('Submit button clicked directly');
+                        // Let the form submission handler take over
+                    });
                 }
-                */
-
-            } catch (error) {
-                console.error('Registration failed:', error);
-                showErrorModal('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองอีกครั้ง');
+            } else {
+                console.error('Register form not found');
             }
+        }
+
+        // Initialize everything when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded');
+            
+            initializeElements();
+            setupPasswordToggle();
+            setupFormSubmission();
+            
+            // Check if user is already logged in when page loads
+            AuthManager.redirectIfAuthenticated();
         });
     </script>
 
