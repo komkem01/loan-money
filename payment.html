@@ -13,6 +13,9 @@
             font-family: 'Nunito', sans-serif;
             overflow-x: hidden;
         }
+        .modal {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #d1fae5; border-radius: 10px; }
@@ -65,7 +68,18 @@
                         </button>
                         <div class="flex-1"></div>
                         <div class="flex items-center space-x-4">
-                            <span class="font-semibold text-gray-700 hidden sm:block">Welcome, <span id="userFullName">User</span>!</span>
+                            <div class="hidden sm:flex items-center space-x-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold text-sm"
+                                        id="userAvatar">
+                                        U
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="font-semibold text-gray-700 text-sm" id="userFullName">User</span>
+                                        <span class="text-xs text-gray-500" id="userUsername">@username</span>
+                                    </div>
+                                </div>
+                            </div>
                             <button id="logoutButton" class="text-gray-500 hover:text-emerald-600 focus:outline-none">
                                 <i class="ph-sign-out text-2xl"></i>
                             </button>
@@ -153,6 +167,43 @@
                     </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- Edit Transaction Modal -->
+    <div id="editTransactionModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black bg-opacity-50">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 transform scale-95 modal">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-extrabold text-gray-800">แก้ไขรายการชำระ</h2>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="ph-x text-2xl"></i>
+                </button>
+            </div>
+            <form id="editTransactionForm" class="space-y-4">
+                <input type="hidden" id="editTransactionId">
+                <div>
+                    <label for="editAmount" class="text-sm font-semibold block mb-2 text-gray-600">จำนวนเงิน (฿)</label>
+                    <input type="number" id="editAmount" step="0.01" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" required>
+                </div>
+                <div>
+                    <label for="editPaymentDate" class="text-sm font-semibold block mb-2 text-gray-600">วันที่ชำระ</label>
+                    <input type="date" id="editPaymentDate" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" required>
+                </div>
+                <div>
+                    <label for="editRemark" class="text-sm font-semibold block mb-2 text-gray-600">หมายเหตุ</label>
+                    <textarea id="editRemark" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" rows="3"></textarea>
+                </div>
+                <div class="pt-4 flex space-x-3">
+                    <button type="button" onclick="closeEditModal()" 
+                            class="flex-1 px-4 py-3 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-xl font-medium transition">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 px-4 py-3 text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl font-medium transition">
+                        บันทึก
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
     
@@ -286,48 +337,224 @@
             AuthManager.checkTokenExpiry();
         }, 60000);
 
+        // --- API Configuration ---
+        const API_BASE_URL = 'http://localhost:8080/api/v1';
+
+        // API Helper for Loan Management
+        const LoanAPI = {
+            async getLoans() {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/loans?limit=100`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to fetch loans');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching loans:', error);
+                    throw error;
+                }
+            }
+        };
+
+        // API Helper for Transaction Management  
+        const TransactionAPI = {
+            async getTransactions(page = 1, limit = 5) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/transactions?page=${page}&limit=${limit}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to fetch transactions');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching transactions:', error);
+                    throw error;
+                }
+            },
+
+            async createTransaction(transactionData) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/transactions`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(transactionData)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to create transaction');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error creating transaction:', error);
+                    throw error;
+                }
+            },
+
+            async updateTransaction(transactionId, transactionData) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/transactions/${transactionId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(transactionData)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to update transaction');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error updating transaction:', error);
+                    throw error;
+                }
+            },
+
+            async deleteTransaction(transactionId) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/transactions/${transactionId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to delete transaction');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error deleting transaction:', error);
+                    throw error;
+                }
+            }
+        };
+
+        // API Helper for User Profile
+        const ProfileAPI = {
+            async getProfile() {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/profile`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to fetch profile');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching profile:', error);
+                    throw error;
+                }
+            }
+        };
+
         // --- Sidebar Toggle ---
         document.getElementById('menuBtn').addEventListener('click', () => {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         });
 
-        // --- Mock Data ---
-        const mockLoans = [
-            { id: 1, borrower_name: 'Alice', amount: 5000, status: 'active' },
-            { id: 3, borrower_name: 'Charlie', amount: 10000, status: 'overdue' },
-            { id: 4, borrower_name: 'David', amount: 7500, status: 'active' },
-        ];
-        
-        const mockTransactions = [
-            { id: 101, loan_id: 1, borrower_name: 'Alice', amount: 500, created_at: '2025-09-25', remark: 'คืนงวดแรก' },
-            { id: 102, loan_id: 3, borrower_name: 'Charlie', amount: 2000, created_at: '2025-09-24', remark: '' },
-            { id: 103, loan_id: 4, borrower_name: 'David', amount: 1000, created_at: '2025-09-23', remark: 'ค่าอาหาร' },
-            { id: 104, loan_id: 1, borrower_name: 'Alice', amount: 800, created_at: '2025-09-22', remark: 'ค่าใช้จ่าย' },
-            { id: 105, loan_id: 5, borrower_name: 'Emma', amount: 300, created_at: '2025-09-21', remark: 'ค่าขนม' },
-            { id: 106, loan_id: 6, borrower_name: 'Frank', amount: 1500, created_at: '2025-09-20', remark: 'งวดที่ 1' },
-            { id: 107, loan_id: 8, borrower_name: 'Henry', amount: 600, created_at: '2025-09-19', remark: '' },
-            { id: 108, loan_id: 9, borrower_name: 'Ivy', amount: 400, created_at: '2025-09-18', remark: 'ค่าน้ำมัน' },
-            { id: 109, loan_id: 10, borrower_name: 'Jack', amount: 2500, created_at: '2025-09-17', remark: 'งวดที่ 2' },
-            { id: 110, loan_id: 12, borrower_name: 'Liam', amount: 1200, created_at: '2025-09-16', remark: 'ค่าเสื้อผ้า' },
-        ];
-
         // --- Pagination Variables for Transactions ---
         let transactionCurrentPage = 1;
         const transactionsPerPage = 5;
-        let filteredTransactions = [...mockTransactions];
+        let filteredTransactions = [];
 
-        // --- Populate Loan Select Options ---
+        // --- Load and Populate Loans ---
+        const loadLoans = async () => {
+            // Show loading state
+            const selectElement = document.getElementById('loanSelect');
+            selectElement.innerHTML = '<option value="" disabled selected>กำลังโหลดข้อมูล...</option>';
+            
+            try {
+                console.log('Loading loans...');
+                const response = await LoanAPI.getLoans();
+                console.log('Loans response:', response);
+                
+                const activeLoans = response.data.filter(loan => loan.status === 'active' || loan.status === 'overdue');
+                console.log('Active loans:', activeLoans);
+                
+                populateLoanSelect(activeLoans);
+            } catch (error) {
+                console.error('Error loading loans:', error);
+                showMessage('ไม่สามารถโหลดรายการเงินยืมได้: ' + error.message, true);
+                // Fallback to empty list
+                populateLoanSelect([]);
+            }
+        };
+
         const populateLoanSelect = (loans) => {
+            console.log('Populating loan select with:', loans);
             const selectElement = document.getElementById('loanSelect');
             selectElement.innerHTML = '<option value="" disabled selected>-- Select a loan --</option>';
-            selectElement.innerHTML += loans
-                .map(loan => `<option value="${loan.id}">${loan.borrower_name} (Total: ฿${loan.amount.toLocaleString()})</option>`)
-                .join('');
+            
+            if (loans && loans.length > 0) {
+                selectElement.innerHTML += loans
+                    .map(loan => {
+                        const remaining = loan.amount - (loan.total_paid || 0);
+                        return `<option value="${loan.id}">${loan.borrower_name} (คงเหลือ: ฿${remaining.toLocaleString()})</option>`;
+                    })
+                    .join('');
+                console.log('Added', loans.length, 'loan options');
+            } else {
+                selectElement.innerHTML += '<option value="" disabled>-- ไม่มีรายการเงินยืมที่ใช้งานได้ --</option>';
+                console.log('No loans available');
+            }
         };
         
         // --- Transaction Pagination Functions ---
-        const updateTransactionPaginationInfo = () => {
-            const totalItems = filteredTransactions.length;
+        const updateTransactionPaginationInfo = (totalItems) => {
             const startItem = totalItems === 0 ? 0 : (transactionCurrentPage - 1) * transactionsPerPage + 1;
             const endItem = Math.min(transactionCurrentPage * transactionsPerPage, totalItems);
             
@@ -336,9 +563,7 @@
             document.getElementById('transactionTotalItems').textContent = totalItems;
         };
 
-        const renderTransactionPagination = () => {
-            const totalItems = filteredTransactions.length;
-            const totalPages = Math.ceil(totalItems / transactionsPerPage);
+        const renderTransactionPagination = (totalPages) => {
             const paginationContainer = document.getElementById('transactionPaginationContainer');
             const pageNumbers = document.getElementById('transactionPageNumbers');
             const prevBtn = document.getElementById('transactionPrevBtn');
@@ -376,22 +601,53 @@
                 pageBtn.addEventListener('click', () => goToTransactionPage(i));
                 pageNumbers.appendChild(pageBtn);
             }
-
-            updateTransactionPaginationInfo();
         };
 
         const goToTransactionPage = (page) => {
             transactionCurrentPage = page;
-            renderTransactionCurrentPage();
+            loadTransactions();
         };
 
-        const renderTransactionCurrentPage = () => {
-            const startIndex = (transactionCurrentPage - 1) * transactionsPerPage;
-            const endIndex = startIndex + transactionsPerPage;
-            const currentPageData = filteredTransactions.slice(startIndex, endIndex);
+        // --- Load Transactions from API ---
+        const loadTransactions = async () => {
+            // Show loading state
+            const tableBody = document.getElementById('transactionTableBody');
+            const noDataMsg = document.getElementById('noTransactionsMessage');
             
-            renderTransactions(currentPageData);
-            renderTransactionPagination();
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                        <i class="ph-spinner ph-spin text-2xl mb-2"></i>
+                        <div>กำลังโหลดข้อมูล...</div>
+                    </td>
+                </tr>
+            `;
+            noDataMsg.classList.add('hidden');
+            
+            try {
+                console.log('Loading transactions...', { page: transactionCurrentPage, limit: transactionsPerPage });
+                const response = await TransactionAPI.getTransactions(transactionCurrentPage, transactionsPerPage);
+                console.log('Transactions response:', response);
+                
+                // Update pagination data
+                const totalItems = response.pagination?.total || 0;
+                const totalPages = response.pagination?.pages || 0;
+                
+                filteredTransactions = response.data || [];
+                console.log('Filtered transactions:', filteredTransactions);
+                
+                renderTransactions(filteredTransactions);
+                renderTransactionPagination(totalPages);
+                updateTransactionPaginationInfo(totalItems);
+                
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                showMessage('ไม่สามารถโหลดประวัติการชำระได้: ' + error.message, true);
+                
+                // Show empty state
+                renderTransactions([]);
+                document.getElementById('transactionPaginationContainer').classList.add('hidden');
+            }
         };
 
         // --- Render Transactions Table ---
@@ -407,31 +663,147 @@
             }
             
             noDataMsg.classList.add('hidden');
-            tableBody.innerHTML = transactions.map(tx => `
-                <tr class="bg-white border-b hover:bg-gray-50">
-                    <th scope="row" class="px-6 py-4 font-bold text-gray-900">${tx.borrower_name}</th>
-                    <td class="px-6 py-4 text-green-600 font-semibold">฿${tx.amount.toLocaleString()}</td>
-                    <td class="px-6 py-4">${tx.created_at}</td>
-                    <td class="px-6 py-4 text-gray-500">${tx.remark || '-'}</td>
-                </tr>
-            `).join('');
+            tableBody.innerHTML = transactions.map(tx => {
+                const formattedDate = tx.created_at ? new Date(tx.created_at).toLocaleDateString('th-TH') : '-';
+                const borrowerName = tx.borrower_name || 'Unknown';
+                
+                return `
+                    <tr class="bg-white border-b hover:bg-gray-50">
+                        <th scope="row" class="px-6 py-4 font-bold text-gray-900">${borrowerName}</th>
+                        <td class="px-6 py-4 text-green-600 font-semibold">฿${tx.amount.toLocaleString()}</td>
+                        <td class="px-6 py-4">${formattedDate}</td>
+                        <td class="px-6 py-4 text-gray-500">${tx.remark || '-'}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-2">
+                                <button onclick="editTransaction('${tx.id}')" 
+                                        class="text-blue-600 hover:text-blue-800 p-1 rounded"
+                                        title="แก้ไข">
+                                    <i class="ph ph-pencil-simple text-lg"></i>
+                                </button>
+                                <button onclick="deleteTransaction('${tx.id}')" 
+                                        class="text-red-600 hover:text-red-800 p-1 rounded"
+                                        title="ลบ">
+                                    <i class="ph ph-trash text-lg"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        // --- Transaction Edit/Delete Functions ---
+        let currentTransactionId = null;
+        let currentTransactionData = null;
+
+        const editTransaction = async (transactionId) => {
+            try {
+                // Find the transaction data from current loaded data
+                const transaction = filteredTransactions.find(tx => tx.id === transactionId);
+                if (!transaction) {
+                    showMessage('ไม่พบข้อมูลรายการชำระ', true);
+                    return;
+                }
+
+                currentTransactionId = transactionId;
+                currentTransactionData = transaction;
+
+                // Populate modal form
+                document.getElementById('editTransactionId').value = transactionId;
+                document.getElementById('editAmount').value = transaction.amount;
+                document.getElementById('editPaymentDate').value = transaction.payment_date || transaction.created_at?.split('T')[0] || '';
+                document.getElementById('editRemark').value = transaction.remark || '';
+
+                // Show modal
+                const modal = document.getElementById('editTransactionModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    modal.querySelector('.modal').classList.remove('scale-95');
+                }, 10);
+
+            } catch (error) {
+                console.error('Error preparing edit transaction:', error);
+                showMessage('ไม่สามารถแก้ไขรายการได้: ' + error.message, true);
+            }
+        };
+
+        const closeEditModal = () => {
+            const modal = document.getElementById('editTransactionModal');
+            modal.querySelector('.modal').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.getElementById('editTransactionForm').reset();
+            }, 300);
+            currentTransactionId = null;
+            currentTransactionData = null;
+        };
+
+        const deleteTransaction = async (transactionId) => {
+            if (!confirm('คุณแน่ใจหรือไม่ที่จะลบรายการชำระเงินนี้?')) {
+                return;
+            }
+
+            try {
+                await TransactionAPI.deleteTransaction(transactionId);
+                showMessage('ลบรายการชำระเงินเรียบร้อยแล้ว');
+                await loadTransactions();
+                await loadLoans(); // Refresh loan amounts
+            } catch (error) {
+                console.error('Error deleting transaction:', error);
+                showMessage('ไม่สามารถลบรายการได้: ' + error.message, true);
+            }
+        };
+
+        // --- Load User Profile ---
+        const loadUserProfile = async () => {
+            try {
+                const profileData = await ProfileAPI.getProfile();
+                
+                const fullName = profileData.full_name || profileData.username || 'User';
+                const username = profileData.username || 'username';
+                
+                document.getElementById('userFullName').textContent = fullName;
+                document.getElementById('userUsername').textContent = `@${username}`;
+
+                // Update localStorage with fresh user data
+                const updatedUser = {
+                    id: profileData.id,
+                    username: profileData.username,
+                    full_name: profileData.full_name
+                };
+                localStorage.setItem('loan_money_user', JSON.stringify(updatedUser));
+
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+                
+                // Fallback to localStorage data
+                const user = AuthManager.getUser();
+                const fallbackName = (user && user.full_name) ? user.full_name : 
+                                   (user && user.username) ? user.username : 'User';
+                const fallbackUsername = (user && user.username) ? user.username : 'username';
+                
+                document.getElementById('userFullName').textContent = fallbackName;
+                document.getElementById('userUsername').textContent = `@${fallbackUsername}`;
+            }
         };
 
         // --- Initial Load ---
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('userFullName').textContent = 'Ploy';
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load user profile
+            await loadUserProfile();
             
             // Set payment date to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('paymentDate').value = today;
 
-            // Populate data
-            populateLoanSelect(mockLoans);
+            // Load data from API
+            await loadLoans();
             
             // Initialize transactions with pagination
-            filteredTransactions = [...mockTransactions];
             transactionCurrentPage = 1;
-            renderTransactionCurrentPage();
+            await loadTransactions();
 
             // Add event listeners for transaction pagination buttons
             document.getElementById('transactionPrevBtn').addEventListener('click', () => {
@@ -441,27 +813,128 @@
             });
 
             document.getElementById('transactionNextBtn').addEventListener('click', () => {
-                const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
-                if (transactionCurrentPage < totalPages) {
-                    goToTransactionPage(transactionCurrentPage + 1);
+                // We don't need to check totalPages here since it's handled by the disabled state
+                goToTransactionPage(transactionCurrentPage + 1);
+            });
+
+            // Add event listener for edit transaction form
+            document.getElementById('editTransactionForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                if (!currentTransactionId) return;
+
+                const amount = parseFloat(document.getElementById('editAmount').value);
+                const paymentDate = document.getElementById('editPaymentDate').value;
+                const remark = document.getElementById('editRemark').value;
+
+                // Validation
+                if (!amount || amount <= 0) {
+                    showMessage('กรุณากรอกจำนวนเงินที่ถูกต้อง', true);
+                    return;
+                }
+
+                if (!paymentDate) {
+                    showMessage('กรุณาเลือกวันที่ชำระ', true);
+                    return;
+                }
+
+                const updateData = {
+                    loan_id: currentTransactionData.loan_id,
+                    amount: amount,
+                    remark: remark.trim() || null
+                };
+
+                try {
+                    // Show loading state
+                    const submitBtn = e.target.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.textContent;
+                    submitBtn.textContent = 'กำลังบันทึก...';
+                    submitBtn.disabled = true;
+
+                    await TransactionAPI.updateTransaction(currentTransactionId, updateData);
+                    
+                    showMessage('แก้ไขรายการชำระเงินเรียบร้อยแล้ว');
+                    closeEditModal();
+                    await loadTransactions();
+                    await loadLoans(); // Refresh loan amounts
+
+                } catch (error) {
+                    console.error('Error updating transaction:', error);
+                    showMessage('ไม่สามารถแก้ไขรายการได้: ' + error.message, true);
+                } finally {
+                    // Reset button state
+                    const submitBtn = e.target.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.textContent = 'บันทึก';
+                        submitBtn.disabled = false;
+                    }
                 }
             });
         });
         
         // --- Form Submission ---
-        document.getElementById('paymentForm').addEventListener('submit', (e) => {
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const paymentData = {
-                loan_id: document.getElementById('loanSelect').value,
-                amount: document.getElementById('paymentAmount').value,
-                payment_date: document.getElementById('paymentDate').value,
-                remark: document.getElementById('paymentRemark').value,
+            
+            const loanId = document.getElementById('loanSelect').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const paymentDate = document.getElementById('paymentDate').value;
+            const remark = document.getElementById('paymentRemark').value;
+            
+            // Validation
+            if (!loanId) {
+                showMessage('กรุณาเลือกรายการเงินยืม', true);
+                return;
+            }
+            
+            if (!amount || amount <= 0) {
+                showMessage('กรุณากรอกจำนวนเงินที่ถูกต้อง', true);
+                return;
+            }
+            
+            if (!paymentDate) {
+                showMessage('กรุณาเลือกวันที่ชำระ', true);
+                return;
+            }
+
+            const transactionData = {
+                loan_id: loanId,
+                amount: amount,
+                remark: remark.trim() || null
             };
-            console.log('Submitting payment:', paymentData);
-            alert('Payment recorded successfully!');
-            // TODO: API call to save transaction and then re-fetch/re-render
-            e.target.reset();
-            document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+
+            try {
+                // Show loading state
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'กำลังบันทึก...';
+                submitBtn.disabled = true;
+
+                await TransactionAPI.createTransaction(transactionData);
+                
+                showMessage('บันทึกการชำระเงินเรียบร้อยแล้ว');
+                
+                // Reset form
+                e.target.reset();
+                document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+                
+                // Reload data
+                await loadTransactions();
+                await loadLoans(); // Refresh loan amounts
+
+                // Reset button state
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+
+            } catch (error) {
+                console.error('Error submitting payment:', error);
+                showMessage('ไม่สามารถบันทึกการชำระเงินได้: ' + error.message, true);
+                
+                // Reset button state
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                submitBtn.textContent = 'บันทึกการชำระ';
+                submitBtn.disabled = false;
+            }
         });
 
         // --- Logout Logic ---

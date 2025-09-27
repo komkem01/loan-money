@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"loan-money/internal/auth"
 	"loan-money/internal/database"
@@ -14,6 +15,50 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 )
+
+// LoggingMiddleware logs all HTTP requests
+func LoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		// Create a custom response writer to capture status code
+		lrw := &loggingResponseWriter{
+			ResponseWriter: w,
+			statusCode:     http.StatusOK,
+		}
+
+		// Call the next handler
+		next.ServeHTTP(lrw, r)
+
+		// Log the request details
+		duration := time.Since(start)
+		clientIP := r.RemoteAddr
+		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+			clientIP = forwarded
+		}
+
+		log.Printf("[%s] %s %s %s - Status: %d - Duration: %v - IP: %s",
+			start.Format("2006-01-02 15:04:05"),
+			r.Method,
+			r.URL.Path,
+			r.URL.RawQuery,
+			lrw.statusCode,
+			duration,
+			clientIP,
+		)
+	})
+}
+
+// loggingResponseWriter wraps http.ResponseWriter to capture status code
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (lrw *loggingResponseWriter) WriteHeader(code int) {
+	lrw.statusCode = code
+	lrw.ResponseWriter.WriteHeader(code)
+}
 
 func main() {
 	// Load environment variables from .env file
@@ -35,9 +80,16 @@ func main() {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(db)
+	profileHandler := handlers.NewProfileHandler(db)
+	loanHandler := handlers.NewLoanHandler(db)
+	transactionHandler := handlers.NewTransactionHandler(db)
+	dashboardHandler := handlers.NewDashboardHandler(db)
 
 	// Setup routes
 	router := mux.NewRouter()
+
+	// Add logging middleware to all routes
+	router.Use(LoggingMiddleware)
 
 	// Health check endpoint
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -57,17 +109,33 @@ func main() {
 	protected := api.PathPrefix("").Subrouter()
 	protected.Use(auth.AuthMiddleware)
 
-	// User profile endpoint (example of protected route)
-	protected.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
-		user, ok := auth.GetUserFromContext(r)
-		if !ok {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, `{"user_id":"%s","username":"%s"}`, user.ID, user.Username)
-	}).Methods("GET")
+	// Profile management endpoints
+	protected.HandleFunc("/profile", profileHandler.GetProfile).Methods("GET")
+	protected.HandleFunc("/profile", profileHandler.UpdateProfile).Methods("PATCH")
+	protected.HandleFunc("/change-password", profileHandler.ChangePassword).Methods("PATCH")
+
+	// Dashboard endpoints
+	protected.HandleFunc("/dashboard/stats", dashboardHandler.GetDashboardStats).Methods("GET")
+	protected.HandleFunc("/dashboard/recent-transactions", dashboardHandler.GetRecentTransactions).Methods("GET")
+	protected.HandleFunc("/dashboard/loan-summary", dashboardHandler.GetLoanSummary).Methods("GET")
+	protected.HandleFunc("/dashboard/monthly-stats", dashboardHandler.GetMonthlyStats).Methods("GET")
+	protected.HandleFunc("/dashboard/overdue-loans", dashboardHandler.GetOverdueLoans).Methods("GET")
+
+	// Loan management endpoints
+	protected.HandleFunc("/loans", loanHandler.GetLoans).Methods("GET")
+	protected.HandleFunc("/loans", loanHandler.CreateLoan).Methods("POST")
+	protected.HandleFunc("/loans/{id}", loanHandler.GetLoan).Methods("GET")
+	protected.HandleFunc("/loans/{id}", loanHandler.UpdateLoan).Methods("PATCH")
+	protected.HandleFunc("/loans/{id}", loanHandler.DeleteLoan).Methods("DELETE")
+	protected.HandleFunc("/loans/{id}/status", loanHandler.UpdateLoanStatus).Methods("PATCH")
+
+	// Transaction management endpoints
+	protected.HandleFunc("/transactions", transactionHandler.GetTransactions).Methods("GET")
+	protected.HandleFunc("/transactions", transactionHandler.CreateTransaction).Methods("POST")
+	protected.HandleFunc("/transactions/{id}", transactionHandler.GetTransaction).Methods("GET")
+	protected.HandleFunc("/transactions/{id}", transactionHandler.UpdateTransaction).Methods("PATCH")
+	protected.HandleFunc("/transactions/{id}", transactionHandler.DeleteTransaction).Methods("DELETE")
+	protected.HandleFunc("/loans/{loan_id}/transactions", transactionHandler.GetTransactionsByLoan).Methods("GET")
 
 	// Serve static files (HTML, CSS, JS, images)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./")))
@@ -89,12 +157,6 @@ func main() {
 	}
 
 	fmt.Printf("Server starting on port %s\n", port)
-	// fmt.Println("Available endpoints:")
-	// fmt.Println("GET  /health - Health check")
-	// fmt.Println("POST /api/v1/register - User registration")
-	// fmt.Println("POST /api/v1/login - User login")
-	// fmt.Println("GET  /api/v1/profile - Get user profile (requires auth)")
-	// fmt.Println("Press Ctrl+C to stop the server")
 
 	log.Fatal(http.ListenAndServe(":"+port, handler))
 }

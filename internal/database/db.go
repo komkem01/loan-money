@@ -74,10 +74,22 @@ func CreateTables(db *sql.DB) error {
 		`CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			username VARCHAR NOT NULL UNIQUE,
-			password VARCHAR NOT NULL,
+			password_hash VARCHAR NOT NULL,
 			full_name VARCHAR,
-			created_at TIMESTAMPTZ DEFAULT NOW()
+			created_at TIMESTAMPTZ DEFAULT NOW(),
+			updated_at TIMESTAMPTZ DEFAULT NOW()
 		);`,
+
+		// Migration queries to handle existing data
+		`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();`,
+
+		// Rename password column to password_hash if it exists
+		`DO $$
+		BEGIN
+			IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'password') THEN
+				ALTER TABLE users RENAME COLUMN password TO password_hash;
+			END IF;
+		END $$;`,
 
 		`CREATE TABLE IF NOT EXISTS loans (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -96,8 +108,19 @@ func CreateTables(db *sql.DB) error {
 			loan_id UUID NOT NULL REFERENCES loans(id),
 			amount NUMERIC NOT NULL,
 			remark TEXT,
-			created_at TIMESTAMPTZ DEFAULT NOW()
+			created_at TIMESTAMPTZ DEFAULT NOW(),
+			payment_date TIMESTAMP,
+			deleted_at TIMESTAMP,
+			updated_at TIMESTAMP
 		);`,
+
+		// Add missing columns to transactions table if they don't exist
+		`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS payment_date TIMESTAMP;`,
+		`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;`,
+		`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;`,
+
+		// Add missing columns to loans table if they don't exist
+		`ALTER TABLE loans ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;`,
 	}
 
 	for _, query := range queries {

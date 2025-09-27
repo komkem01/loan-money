@@ -71,8 +71,18 @@
                         </button>
                         <div class="flex-1"></div>
                         <div class="flex items-center space-x-4">
-                            <span class="font-semibold text-gray-700 hidden sm:block">Welcome, <span id="userFullName">User</span>!</span>
-                            <button id="logoutButton" class="text-gray-500 hover:text-emerald-600 focus:outline-none">
+                            <div class="hidden sm:flex items-center space-x-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold text-sm" id="userAvatar">
+                                        U
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="font-semibold text-gray-700 text-sm" id="userFullName">User</span>
+                                        <span class="text-xs text-gray-500" id="userUsername">@username</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="logoutButton" class="text-gray-500 hover:text-emerald-600 focus:outline-none" title="Logout">
                                 <i class="ph-sign-out text-2xl"></i>
                             </button>
                         </div>
@@ -84,10 +94,68 @@
             <main class="flex-1 container mx-auto p-4 sm:p-6 lg:p-8">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
                     <h1 class="text-3xl font-extrabold text-gray-800 mb-4 sm:mb-0">จัดการข้อมูลยืม-คืน</h1>
-                    <button id="addLoanBtn" class="w-full sm:w-auto flex items-center justify-center space-x-2 px-5 py-3 text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl font-bold shadow-lg hover:shadow-emerald-300/50 transition duration-300">
-                        <i class="ph-plus-circle text-2xl"></i>
-                        <span>Add New Loan</span>
-                    </button>
+                    <div class="flex space-x-3">
+                        <button id="refreshBtn" class="flex items-center justify-center space-x-2 px-4 py-3 text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 rounded-xl font-medium transition duration-300" title="รีเฟรชข้อมูล">
+                            <i class="ph-arrow-clockwise text-xl"></i>
+                            <span class="hidden sm:inline">รีเฟรช</span>
+                        </button>
+                        <button id="addLoanBtn" class="flex items-center justify-center space-x-2 px-5 py-3 text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl font-bold shadow-lg hover:shadow-emerald-300/50 transition duration-300">
+                            <i class="ph-plus-circle text-2xl"></i>
+                            <span>Add New Loan</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- User Stats Summary -->
+                <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 p-6 rounded-2xl shadow-md mb-6 text-white">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold">สรุปข้อมูลเงินกู้</h2>
+                        <div class="text-emerald-200 text-sm" id="lastUpdated">
+                            อัพเดตล่าสุด: -
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                            <div class="text-2xl font-bold" id="totalLoansCount">-</div>
+                            <div class="text-sm opacity-90">ทั้งหมด</div>
+                        </div>
+                        <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                            <div class="text-2xl font-bold" id="activeLoansCount">-</div>
+                            <div class="text-sm opacity-90">Active</div>
+                        </div>
+                        <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                            <div class="text-2xl font-bold" id="totalLoanAmount">-</div>
+                            <div class="text-sm opacity-90">ยอดรวม (฿)</div>
+                        </div>
+                        <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                            <div class="text-2xl font-bold" id="totalDebtAmount">-</div>
+                            <div class="text-sm opacity-90">คงค้าง (฿)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search and Filter Section -->
+                <div class="bg-white p-4 rounded-2xl shadow-md mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">ค้นหาชื่อผู้กู้</label>
+                            <input type="text" id="searchInput" placeholder="ค้นหาชื่อผู้กู้..." 
+                                   class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">สถานะ</label>
+                            <select id="statusFilter" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                <option value="">ทั้งหมด</option>
+                                <option value="active">Active</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button id="resetFilters" class="w-full px-4 py-3 text-gray-600 border border-gray-300 rounded-xl hover:bg-gray-50 transition">
+                                <i class="ph-arrow-counter-clockwise mr-2"></i>รีเซ็ต
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Loans Table -->
@@ -108,7 +176,11 @@
                     </table>
                      <div id="noDataMessage" class="hidden text-center py-16">
                         <i class="ph-files text-6xl text-gray-300"></i>
-                        <p class="text-gray-500 mt-4">No loans found. Add one to get started!</p>
+                        <p class="text-gray-500 mt-4 text-lg font-medium">ยังไม่มีรายการเงินกู้</p>
+                        <p class="text-gray-400 mt-2">เริ่มต้นโดยการเพิ่มรายการเงินกู้แรกของคุณ</p>
+                        <button onclick="document.getElementById('addLoanBtn').click()" class="mt-4 px-6 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition">
+                            <i class="ph-plus mr-2"></i>เพิ่มรายการแรก
+                        </button>
                     </div>
 
                     <!-- Pagination -->
@@ -166,6 +238,62 @@
             </form>
         </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 transform scale-95 modal">
+            <div class="text-center mb-6">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <i class="ph-trash text-red-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">ยืนยันการลบ</h3>
+                <p class="text-sm text-gray-500">คุณแน่ใจหรือไม่ที่จะลบข้อมูลการยืมเงินนี้? การกระทำนี้ไม่สามารถยกเลิกได้</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="hideConfirmationModal()" 
+                        class="flex-1 px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition">
+                    ยกเลิก
+                </button>
+                <button onclick="confirmDelete()" 
+                        class="flex-1 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition">
+                    ลบ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Change Modal -->
+    <div id="statusChangeModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 transform scale-95 modal">
+            <div class="text-center mb-6">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                    <i class="ph-swap text-blue-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">เปลี่ยนสถานะ</h3>
+                <p class="text-sm text-gray-500">เลือกสถานะใหม่สำหรับการยืมเงินนี้</p>
+            </div>
+            <div class="mb-6">
+                <select id="statusSelect" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl">
+                    <option value="active">กำลังดำเนินการ (Active)</option>
+                    <option value="completed">เสร็จสิ้นแล้ว (Completed)</option>
+                    <option value="overdue">เกินกำหนด (Overdue)</option>
+                </select>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="hideStatusChangeModal()" 
+                        class="flex-1 px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition">
+                    ยกเลิก
+                </button>
+                <button onclick="confirmStatusChange()" 
+                        class="flex-1 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition">
+                    บันทึก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
     <script>
         // Token Management System
@@ -263,7 +391,148 @@
             }
         };
 
-        // Message display function
+        // Modal management
+        let currentLoanId = null;
+
+        function showDeleteConfirmation(loanId) {
+            currentLoanId = loanId;
+            document.getElementById('confirmationModal').classList.remove('hidden');
+            document.getElementById('confirmationModal').classList.add('flex');
+            setTimeout(() => {
+                document.getElementById('confirmationModal').querySelector('.modal').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function hideConfirmationModal() {
+            document.getElementById('confirmationModal').querySelector('.modal').classList.add('scale-95');
+            setTimeout(() => {
+                document.getElementById('confirmationModal').classList.add('hidden');
+                document.getElementById('confirmationModal').classList.remove('flex');
+            }, 300);
+            currentLoanId = null;
+        }
+
+        function showStatusChangeModal(loanId, currentStatus) {
+            currentLoanId = loanId;
+            const select = document.getElementById('statusSelect');
+            select.value = currentStatus;
+            document.getElementById('statusChangeModal').classList.remove('hidden');
+            document.getElementById('statusChangeModal').classList.add('flex');
+            setTimeout(() => {
+                document.getElementById('statusChangeModal').querySelector('.modal').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function hideStatusChangeModal() {
+            document.getElementById('statusChangeModal').querySelector('.modal').classList.add('scale-95');
+            setTimeout(() => {
+                document.getElementById('statusChangeModal').classList.add('hidden');
+                document.getElementById('statusChangeModal').classList.remove('flex');
+            }, 300);
+            currentLoanId = null;
+        }
+
+        async function confirmDelete() {
+            if (!currentLoanId) return;
+
+            try {
+                await LoanAPI.deleteLoan(currentLoanId);
+                showToast('ลบข้อมูลการยืมเงินสำเร็จ', 'success');
+                hideConfirmationModal();
+                await loadLoans(); // Refresh the list
+            } catch (error) {
+                showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+            }
+        }
+
+        async function confirmStatusChange() {
+            if (!currentLoanId) return;
+
+            const newStatus = document.getElementById('statusSelect').value;
+            
+            try {
+                await LoanAPI.updateLoanStatus(currentLoanId, newStatus);
+                showToast('อัพเดตสถานะสำเร็จ', 'success');
+                hideStatusChangeModal();
+                await loadLoans(); // Refresh the list
+            } catch (error) {
+                showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+            }
+        }
+
+        // Toast notification system
+        function showToast(message, type = 'success', duration = 4000) {
+            const toastContainer = document.getElementById('toastContainer');
+            
+            const toast = document.createElement('div');
+            const toastId = Date.now();
+            toast.id = `toast-${toastId}`;
+            
+            let bgColor, textColor, icon;
+            switch(type) {
+                case 'success':
+                    bgColor = 'bg-green-600';
+                    textColor = 'text-white';
+                    icon = 'ph-check-circle';
+                    break;
+                case 'error':
+                    bgColor = 'bg-red-600';
+                    textColor = 'text-white';
+                    icon = 'ph-x-circle';
+                    break;
+                case 'warning':
+                    bgColor = 'bg-yellow-600';
+                    textColor = 'text-white';
+                    icon = 'ph-warning';
+                    break;
+                case 'info':
+                    bgColor = 'bg-blue-600';
+                    textColor = 'text-white';
+                    icon = 'ph-info';
+                    break;
+                default:
+                    bgColor = 'bg-gray-600';
+                    textColor = 'text-white';
+                    icon = 'ph-bell';
+            }
+            
+            toast.className = `${bgColor} ${textColor} px-6 py-4 rounded-lg shadow-lg max-w-sm transform translate-x-full transition-transform duration-300 flex items-center space-x-3`;
+            toast.innerHTML = `
+                <i class="${icon} text-xl"></i>
+                <span class="flex-1">${message}</span>
+                <button onclick="removeToast('${toastId}')" class="ml-2 hover:opacity-70">
+                    <i class="ph-x text-lg"></i>
+                </button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                removeToast(toastId);
+            }, duration);
+            
+            return toastId;
+        }
+        
+        function removeToast(toastId) {
+            const toast = document.getElementById(`toast-${toastId}`);
+            if (toast) {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }
+
+        // Message display function (legacy compatibility)
         function showMessage(message, isError = false) {
             // Create a message element if it doesn't exist
             let messageDiv = document.getElementById('pageMessage');
@@ -320,35 +589,215 @@
         };
         document.getElementById('addLoanBtn').addEventListener('click', () => {
             document.getElementById('modalTitle').textContent = 'Add New Loan';
+            
+            // Set default loan date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('loanDate').value = today;
+            
             openModal();
         });
         document.getElementById('closeModalBtn').addEventListener('click', closeModal);
         loanModal.addEventListener('click', (e) => { if (e.target === loanModal) closeModal(); });
 
-        // --- Mock Data with More Entries for Testing Pagination ---
-        const mockLoans = [
-            { id: 1, borrower_name: 'Alice', amount: 5000, status: 'active', due_date: '2025-10-15', total_paid: 1000 },
-            { id: 2, borrower_name: 'Bob', amount: 2000, status: 'paid', due_date: '2025-09-01', total_paid: 2000 },
-            { id: 3, borrower_name: 'Charlie', amount: 10000, status: 'overdue', due_date: '2025-08-20', total_paid: 5000 },
-            { id: 4, borrower_name: 'David', amount: 7500, status: 'active', due_date: null, total_paid: 2500 },
-            { id: 5, borrower_name: 'Emma', amount: 3000, status: 'active', due_date: '2025-11-01', total_paid: 500 },
-            { id: 6, borrower_name: 'Frank', amount: 8000, status: 'overdue', due_date: '2025-08-15', total_paid: 2000 },
-            { id: 7, borrower_name: 'Grace', amount: 4500, status: 'paid', due_date: '2025-09-10', total_paid: 4500 },
-            { id: 8, borrower_name: 'Henry', amount: 6000, status: 'active', due_date: '2025-12-01', total_paid: 1500 },
-            { id: 9, borrower_name: 'Ivy', amount: 2500, status: 'active', due_date: '2025-10-30', total_paid: 800 },
-            { id: 10, borrower_name: 'Jack', amount: 9000, status: 'overdue', due_date: '2025-07-20', total_paid: 3000 },
-            { id: 11, borrower_name: 'Kate', amount: 1500, status: 'paid', due_date: '2025-08-30', total_paid: 1500 },
-            { id: 12, borrower_name: 'Liam', amount: 7200, status: 'active', due_date: '2025-11-15', total_paid: 2400 },
-        ];
+        // --- API Configuration ---
+        const API_BASE_URL = 'http://localhost:8080/api/v1';
+        
+        // API Helper for User Profile
+        const ProfileAPI = {
+            async getProfile() {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/profile`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching profile:', error);
+                    throw error;
+                }
+            }
+        };
+
+        // API Helper for Loan Management
+        const LoanAPI = {
+            async getLoans(page = 1, limit = 5, filters = {}) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const params = new URLSearchParams({
+                        page: page.toString(),
+                        limit: limit.toString(),
+                        ...filters
+                    });
+
+                    const response = await fetch(`${API_BASE_URL}/loans?${params}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching loans:', error);
+                    throw error;
+                }
+            },
+
+            async createLoan(loanData) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/loans`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(loanData)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to create loan');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error creating loan:', error);
+                    throw error;
+                }
+            },
+
+            async updateLoan(loanId, loanData) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/loans/${loanId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(loanData)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to update loan');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error updating loan:', error);
+                    throw error;
+                }
+            },
+
+            async getLoan(loanId) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/loans/${loanId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to fetch loan');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching loan:', error);
+                    throw error;
+                }
+            },
+
+            async updateLoanStatus(loanId, status) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/loans/${loanId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ status })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to update loan status');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error updating loan status:', error);
+                    throw error;
+                }
+            },
+
+            async deleteLoan(loanId) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) throw new Error('No authentication token');
+
+                    const response = await fetch(`${API_BASE_URL}/loans/${loanId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to delete loan');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error deleting loan:', error);
+                    throw error;
+                }
+            }
+        };
 
         // --- Pagination Variables ---
         let currentPage = 1;
-        const itemsPerPage = 5;
-        let filteredLoans = [...mockLoans];
+        const itemsPerPage = 10;
+        let totalItems = 0;
+        let totalPages = 0;
 
         // --- Pagination Functions ---
         const updatePaginationInfo = () => {
-            const totalItems = filteredLoans.length;
             const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
             const endItem = Math.min(currentPage * itemsPerPage, totalItems);
             
@@ -358,8 +807,6 @@
         };
 
         const renderPagination = () => {
-            const totalItems = filteredLoans.length;
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
             const paginationContainer = document.getElementById('paginationContainer');
             const pageNumbers = document.getElementById('pageNumbers');
             const prevBtn = document.getElementById('prevBtn');
@@ -401,18 +848,107 @@
             updatePaginationInfo();
         };
 
-        const goToPage = (page) => {
+        const goToPage = async (page) => {
             currentPage = page;
-            renderCurrentPage();
+            await loadLoans();
         };
 
-        const renderCurrentPage = () => {
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const currentPageData = filteredLoans.slice(startIndex, endIndex);
+        // --- Update Loan Statistics ---
+        const updateLoanStatistics = (loans, pagination) => {
+            let totalLoans = pagination.total;
+            let activeLoans = 0;
+            let totalAmount = 0;
+            let totalDebt = 0;
+
+            // If we have all data (small dataset), calculate from actual data
+            if (loans && loans.length > 0) {
+                // For statistics, we need to make a separate call to get all loans summary
+                // For now, use the visible data as approximation
+                loans.forEach(loan => {
+                    if (loan.status === 'active') {
+                        activeLoans++;
+                    }
+                    totalAmount += loan.amount || 0;
+                    totalDebt += (loan.amount - loan.total_paid) || 0;
+                });
+
+                // If this is first page and we have full data, use actual counts
+                if (currentPage === 1 && loans.length === totalLoans) {
+                    // We have complete data
+                } else {
+                    // Estimate based on visible data
+                    const ratio = totalLoans / loans.length;
+                    activeLoans = Math.round(activeLoans * ratio);
+                    totalAmount = Math.round(totalAmount * ratio);
+                    totalDebt = Math.round(totalDebt * ratio);
+                }
+            }
+
+            // Update statistics display
+            document.getElementById('totalLoansCount').textContent = totalLoans.toLocaleString();
+            document.getElementById('activeLoansCount').textContent = activeLoans.toLocaleString();
+            document.getElementById('totalLoanAmount').textContent = totalAmount.toLocaleString();
+            document.getElementById('totalDebtAmount').textContent = totalDebt.toLocaleString();
             
-            renderLoanTable(currentPageData);
-            renderPagination();
+            // Update last updated time
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('th-TH', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            document.getElementById('lastUpdated').textContent = `อัพเดตล่าสุด: ${timeString}`;
+        };
+
+        // --- Load Loans from API ---
+        const loadLoans = async (filters = {}) => {
+            try {
+                // Show loading state
+                document.getElementById('loanTableBody').innerHTML = `
+                    <tr><td colspan="5" class="text-center py-8">
+                        <div class="flex items-center justify-center space-x-2">
+                            <div class="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span>Loading loans...</span>
+                        </div>
+                    </td></tr>
+                `;
+
+                const response = await LoanAPI.getLoans(currentPage, itemsPerPage, filters);
+                
+                // Update pagination data
+                totalItems = response.pagination.total;
+                totalPages = response.pagination.pages;
+                
+                renderLoanTable(response.data);
+                renderPagination();
+                updateLoanStatistics(response.data, response.pagination);
+                
+            } catch (error) {
+                console.error('Error loading loans:', error);
+                
+                // Check if it's an authentication error
+                if (error.message.includes('401') || error.message.includes('authentication')) {
+                    showMessage('Session หมดอายุ กำลังนำท่านกลับสู่หน้าเข้าสู่ระบบ...', true);
+                    setTimeout(() => {
+                        AuthManager.logout();
+                    }, 2000);
+                    return;
+                }
+                
+                showMessage('ไม่สามารถโหลดข้อมูลเงินกู้ได้: ' + error.message, true);
+                
+                // Show error state
+                document.getElementById('loanTableBody').innerHTML = `
+                    <tr><td colspan="5" class="text-center py-8 text-red-500">
+                        <i class="ph-warning-circle text-4xl mb-2 block"></i>
+                        Error loading loans: ${error.message}
+                        <div class="mt-4">
+                            <button onclick="loadLoans()" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
+                                ลองใหม่
+                            </button>
+                        </div>
+                    </td></tr>
+                `;
+            }
         };
 
         // --- Render Function ---
@@ -452,13 +988,19 @@
                         </div>
                     </td>
                     <td class="px-6 py-4">${statusBadge}</td>
-                    <td class="px-6 py-4">${loan.due_date || 'N/A'}</td>
+                    <td class="px-6 py-4">${formatDate(loan.due_date) || 'N/A'}</td>
                     <td class="px-6 py-4 text-center">
                         <div class="flex items-center justify-center space-x-2">
-                           <button class="text-gray-400 hover:text-blue-500 p-2 rounded-full hover:bg-blue-100" title="Edit">
+                           <button class="edit-loan-btn text-gray-400 hover:text-blue-500 p-2 rounded-full hover:bg-blue-100" 
+                                   title="Edit" data-loan-id="${loan.id}">
                                <i class="ph ph-pencil-simple text-xl"></i>
                            </button>
-                           <button class="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-100" title="Delete">
+                           <button class="status-loan-btn text-gray-400 hover:text-green-500 p-2 rounded-full hover:bg-green-100" 
+                                   title="Change Status" data-loan-id="${loan.id}" data-status="${loan.status}">
+                               <i class="ph ph-swap text-xl"></i>
+                           </button>
+                           <button class="delete-loan-btn text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-100" 
+                                   title="Delete" data-loan-id="${loan.id}">
                                <i class="ph ph-trash text-xl"></i>
                            </button>
                         </div>
@@ -468,12 +1010,133 @@
             }).join('');
         };
 
-        // --- Initial Load ---
-        document.addEventListener('DOMContentLoaded', () => {
-            filteredLoans = [...mockLoans];
+        // --- Utility Functions ---
+        const formatDate = (dateString) => {
+            if (!dateString) return null;
+            const date = new Date(dateString);
+            return date.toLocaleDateString('th-TH');
+        };
+
+        // --- Search and Filter Functions ---
+        let searchTimeout;
+        const handleSearch = () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                currentPage = 1; // Reset to first page when searching
+                await applyFilters();
+            }, 300); // Debounce search
+        };
+
+        const applyFilters = async () => {
+            const search = document.getElementById('searchInput').value.trim();
+            const status = document.getElementById('statusFilter').value;
+            
+            const filters = {};
+            if (search) filters.search = search;
+            if (status) filters.status = status;
+            
+            await loadLoans(filters);
+        };
+
+        const resetFilters = async () => {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
             currentPage = 1;
-            renderCurrentPage();
-            document.getElementById('userFullName').textContent = 'Ploy';
+            await loadLoans();
+        };
+
+        // --- Event Handlers ---
+        const handleEditLoan = async (loanId) => {
+            try {
+                document.getElementById('modalTitle').textContent = 'Edit Loan';
+                document.getElementById('loanId').value = loanId;
+                
+                // Get loan details from API
+                const loanResponse = await LoanAPI.getLoan(loanId);
+                const loan = loanResponse.loan || loanResponse;
+                
+                // Populate form with existing data
+                document.getElementById('borrowerName').value = loan.borrower_name || '';
+                document.getElementById('amount').value = loan.amount || '';
+                
+                // Format dates for input fields (convert from API format to YYYY-MM-DD)
+                if (loan.loan_date) {
+                    const loanDate = new Date(loan.loan_date);
+                    document.getElementById('loanDate').value = loanDate.toISOString().split('T')[0];
+                }
+                
+                if (loan.due_date) {
+                    const dueDate = new Date(loan.due_date);
+                    document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
+                } else {
+                    document.getElementById('dueDate').value = '';
+                }
+                
+                openModal();
+            } catch (error) {
+                console.error('Error preparing edit:', error);
+                showMessage('ไม่สามารถโหลดข้อมูลเงินกู้ได้: ' + error.message, true);
+            }
+        };
+
+        // --- Load User Profile ---
+        const loadUserProfile = async () => {
+            try {
+                const profileData = await ProfileAPI.getProfile();
+                
+                // Update user display elements
+                const fullName = profileData.full_name || profileData.username || 'User';
+                const username = profileData.username || 'username';
+                
+                document.getElementById('userFullName').textContent = fullName;
+                document.getElementById('userUsername').textContent = `@${username}`;
+                
+                // Update avatar with first letter of name
+                const avatarLetter = fullName.charAt(0).toUpperCase();
+                document.getElementById('userAvatar').textContent = avatarLetter;
+
+                // Update localStorage with fresh user data
+                const updatedUser = {
+                    id: profileData.id,
+                    username: profileData.username,
+                    full_name: profileData.full_name
+                };
+                localStorage.setItem('loan_money_user', JSON.stringify(updatedUser));
+
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+                
+                // Fallback to localStorage data
+                const user = AuthManager.getUser();
+                const fallbackName = (user && user.full_name) ? user.full_name : 
+                                   (user && user.username) ? user.username : 'User';
+                const fallbackUsername = (user && user.username) ? user.username : 'username';
+                
+                document.getElementById('userFullName').textContent = fallbackName;
+                document.getElementById('userUsername').textContent = `@${fallbackUsername}`;
+                
+                // Update avatar with first letter
+                const avatarLetter = fallbackName.charAt(0).toUpperCase();
+                document.getElementById('userAvatar').textContent = avatarLetter;
+                
+                // If it's an auth error, handle appropriately
+                if (error.message.includes('401') || error.message.includes('authentication')) {
+                    console.log('Authentication error while loading profile');
+                    // Don't show error message for auth issues, just use fallback
+                } else {
+                    console.warn('Failed to load fresh profile data, using cached data');
+                }
+            }
+        };
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load user profile first
+            await loadUserProfile();
+
+            // Load loans data
+            currentPage = 1;
+            await loadLoans();
 
             // Add event listeners for pagination buttons
             document.getElementById('prevBtn').addEventListener('click', () => {
@@ -483,20 +1146,103 @@
             });
 
             document.getElementById('nextBtn').addEventListener('click', () => {
-                const totalPages = Math.ceil(filteredLoans.length / itemsPerPage);
                 if (currentPage < totalPages) {
                     goToPage(currentPage + 1);
                 }
             });
+
+            // Add event delegation for edit/delete/status buttons
+            document.getElementById('loanTableBody').addEventListener('click', (e) => {
+                const editBtn = e.target.closest('.edit-loan-btn');
+                const deleteBtn = e.target.closest('.delete-loan-btn');
+                const statusBtn = e.target.closest('.status-loan-btn');
+                
+                if (editBtn) {
+                    const loanId = editBtn.dataset.loanId;
+                    handleEditLoan(loanId);
+                } else if (deleteBtn) {
+                    const loanId = deleteBtn.dataset.loanId;
+                    showDeleteConfirmation(loanId);
+                } else if (statusBtn) {
+                    const loanId = statusBtn.dataset.loanId;
+                    const currentStatus = statusBtn.dataset.status;
+                    showStatusChangeModal(loanId, currentStatus);
+                }
+            });
+
+            // Add search and filter event listeners
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('resetFilters').addEventListener('click', resetFilters);
+            
+            // Add refresh button listener
+            document.getElementById('refreshBtn').addEventListener('click', async () => {
+                await loadUserProfile();
+                await loadLoans();
+                showMessage('รีเฟรชข้อมูลเรียบร้อยแล้ว');
+            });
         });
 
         // --- Form Submission ---
-        document.getElementById('loanForm').addEventListener('submit', (e) => {
+        document.getElementById('loanForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const loanData = { /* ... get form data ... */ };
-            console.log('Submitting loan data:', loanData);
-            closeModal();
-            // TODO: API call and re-render table
+            
+            const formData = new FormData(e.target);
+            const loanId = document.getElementById('loanId').value;
+            
+            const loanData = {
+                borrower_name: document.getElementById('borrowerName').value.trim(),
+                amount: parseFloat(document.getElementById('amount').value),
+                loan_date: document.getElementById('loanDate').value,
+                due_date: document.getElementById('dueDate').value || null
+            };
+
+            // Validation
+            if (!loanData.borrower_name) {
+                showMessage('กรุณากรอกชื่อผู้กู้', true);
+                return;
+            }
+            
+            if (loanData.amount <= 0) {
+                showMessage('กรุณากรอกจำนวนเงินที่ถูกต้อง', true);
+                return;
+            }
+            
+            if (!loanData.loan_date) {
+                showMessage('กรุณาเลือกวันที่ให้กู้', true);
+                return;
+            }
+
+            try {
+                // Show loading state
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'กำลังบันทึก...';
+                submitBtn.disabled = true;
+
+                let result;
+                if (loanId) {
+                    // Update existing loan
+                    result = await LoanAPI.updateLoan(loanId, loanData);
+                    showToast('แก้ไขข้อมูลเงินกู้เรียบร้อยแล้ว', 'success');
+                } else {
+                    // Create new loan
+                    result = await LoanAPI.createLoan(loanData);
+                    showToast('เพิ่มข้อมูลเงินกู้เรียบร้อยแล้ว', 'success');
+                }
+
+                closeModal();
+                await loadLoans(); // Reload current page
+
+            } catch (error) {
+                console.error('Error submitting loan:', error);
+                showToast('ไม่สามารถบันทึกข้อมูลได้: ' + error.message, 'error');
+            } finally {
+                // Reset button state
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                submitBtn.textContent = 'Save Loan';
+                submitBtn.disabled = false;
+            }
         });
         
         // --- Logout Logic ---

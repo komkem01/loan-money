@@ -1,22 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="/Icon/image.png"/>
-    <title>จัดการข้อมูลส่วนตัว - Loan Tracker</title>
+    <link rel="icon" type="image/png" href="/Icon/image.png" />
+    <title>profile - Loan Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
         body {
             font-family: 'Nunito', sans-serif;
             overflow-x: hidden;
         }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #d1fae5; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6ee7b7; }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1fae5;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6ee7b7;
+        }
 
         /* Modal Styles */
         .modal {
@@ -47,9 +62,17 @@
         }
 
         @keyframes checkmark {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(0);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         /* Error modal animation */
@@ -58,41 +81,59 @@
         }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
         }
     </style>
 </head>
+
 <body class="bg-emerald-50">
 
     <div class="flex min-h-screen">
         <!-- Sidebar Navigation -->
-        <aside id="sidebar" class="w-64 bg-white shadow-lg fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-40">
+        <aside id="sidebar"
+            class="w-64 bg-white shadow-lg fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-40">
             <!-- Logo -->
             <div class="flex items-center justify-center h-20 border-b">
-                 <div class="flex items-center space-x-2">
-                    <svg class="w-10 h-10 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c1.355 0 2.707-.158 4.007-.462M12 21c-1.355 0-2.707-.158-4.007-.462m0 0A9.005 9.005 0 0112 3c1.355 0 2.707.158 4.007.462m0 0A9.005 9.005 0 0012 3C10.645 3 9.293 3.158 8 3.462m0 0c-1.233 1.043-1.936 2.528-1.936 4.218 0 2.404 1.134 4.563 2.87 5.926m1.936-4.218c.288-.242.607-.453.95-.626m0 0a4.5 4.5 0 015.172 0m-.216 4.84c1.135-.333 2.16-.822 3.091-1.456m-8.1 0c.931.634 1.956 1.123 3.091 1.456" />
+                <div class="flex items-center space-x-2">
+                    <svg class="w-10 h-10 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c1.355 0 2.707-.158 4.007-.462M12 21c-1.355 0-2.707-.158-4.007-.462m0 0A9.005 9.005 0 0112 3c1.355 0 2.707.158 4.007.462m0 0A9.005 9.005 0 0012 3C10.645 3 9.293 3.158 8 3.462m0 0c-1.233 1.043-1.936 2.528-1.936 4.218 0 2.404 1.134 4.563 2.87 5.926m1.936-4.218c.288-.242.607-.453.95-.626m0 0a4.5 4.5 0 015.172 0m-.216 4.84c1.135-.333 2.16-.822 3.091-1.456m-8.1 0c.931.634 1.956 1.123 3.091 1.456" />
                     </svg>
                     <span class="text-2xl font-extrabold text-gray-800">Loan Tracker</span>
                 </div>
             </div>
             <!-- Menu -->
             <nav class="mt-8 px-4">
-                <a href="./dashboard.html" class="flex items-center space-x-3 p-3 rounded-xl text-gray-600 hover:bg-emerald-50 transition-colors">
+                <a href="./dashboard.html"
+                    class="flex items-center space-x-3 p-3 rounded-xl text-gray-600 hover:bg-emerald-50 transition-colors">
                     <i class="ph-house-line text-2xl"></i>
                     <span>แดชบอร์ด</span>
                 </a>
-                 <a href="./loan-management.html" class="mt-2 flex items-center space-x-3 p-3 rounded-xl text-gray-600 hover:bg-emerald-50 transition-colors">
+                <a href="./loan-management.html"
+                    class="mt-2 flex items-center space-x-3 p-3 rounded-xl text-gray-600 hover:bg-emerald-50 transition-colors">
                     <i class="ph-list-bullets text-2xl"></i>
                     <span>จัดการยืม-คืน</span>
                 </a>
-                <a href="./payment.html" class="mt-2 flex items-center space-x-3 p-3 rounded-xl text-gray-600 hover:bg-emerald-50 transition-colors">
+                <a href="./payment.html"
+                    class="mt-2 flex items-center space-x-3 p-3 rounded-xl text-gray-600 hover:bg-emerald-50 transition-colors">
                     <i class="ph-receipt text-2xl"></i>
                     <span>หน้าชำระเงิน</span>
                 </a>
-                <a href="./profile.html" class="mt-2 flex items-center space-x-3 p-3 rounded-xl bg-emerald-100 text-emerald-600 font-bold transition-colors">
+                <a href="./profile.html"
+                    class="mt-2 flex items-center space-x-3 p-3 rounded-xl bg-emerald-100 text-emerald-600 font-bold transition-colors">
                     <i class="ph-user-circle text-2xl"></i>
                     <span>จัดการข้อมูลส่วนตัว</span>
                 </a>
@@ -110,7 +151,18 @@
                         </button>
                         <div class="flex-1"></div>
                         <div class="flex items-center space-x-4">
-                            <span class="font-semibold text-gray-700 hidden sm:block">Welcome, <span id="userFullName">User</span>!</span>
+                            <div class="hidden sm:flex items-center space-x-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold text-sm"
+                                        id="userAvatar">
+                                        U
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="font-semibold text-gray-700 text-sm" id="userFullName">User</span>
+                                        <span class="text-xs text-gray-500" id="userUsername">@username</span>
+                                    </div>
+                                </div>
+                            </div>
                             <button id="logoutButton" class="text-gray-500 hover:text-emerald-600 focus:outline-none">
                                 <i class="ph-sign-out text-2xl"></i>
                             </button>
@@ -129,37 +181,51 @@
                         <h2 class="text-xl font-bold text-gray-800 mb-4">ข้อมูลโปรไฟล์</h2>
                         <form id="profileForm" class="space-y-4">
                             <div>
-                                <label for="fullName" class="text-sm font-semibold block mb-2 text-gray-600">ชื่อ-นามสกุล</label>
-                                <input type="text" id="fullName" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" value="Ploy" required>
+                                <label for="fullName"
+                                    class="text-sm font-semibold block mb-2 text-gray-600">ชื่อ-นามสกุล</label>
+                                <input type="text" id="fullName"
+                                    class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" value="Ploy"
+                                    required>
                             </div>
                             <div>
-                                <label for="username" class="text-sm font-semibold block mb-2 text-gray-600">Username</label>
-                                <input type="text" id="username" class="w-full p-3 bg-gray-200 border border-gray-300 rounded-xl cursor-not-allowed" value="ploy" readonly>
+                                <label for="username"
+                                    class="text-sm font-semibold block mb-2 text-gray-600">Username</label>
+                                <input type="text" id="username"
+                                    class="w-full p-3 bg-gray-200 border border-gray-300 rounded-xl cursor-not-allowed"
+                                    value="ploy" readonly>
                             </div>
                             <div class="pt-4 flex justify-end">
-                                <button type="submit" class="text-white bg-emerald-500 hover:bg-emerald-600 font-bold rounded-xl px-6 py-3 text-center transition">บันทึกข้อมูล</button>
+                                <button type="submit"
+                                    class="text-white bg-emerald-500 hover:bg-emerald-600 font-bold rounded-xl px-6 py-3 text-center transition">บันทึกข้อมูล</button>
                             </div>
                         </form>
                     </div>
 
                     <!-- Change Password Form -->
                     <div class="bg-white p-6 rounded-2xl shadow-md">
-                         <h2 class="text-xl font-bold text-gray-800 mb-4">เปลี่ยนรหัสผ่าน</h2>
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">เปลี่ยนรหัสผ่าน</h2>
                         <form id="passwordForm" class="space-y-4">
                             <div>
-                                <label for="currentPassword" class="text-sm font-semibold block mb-2 text-gray-600">รหัสผ่านปัจจุบัน</label>
-                                <input type="password" id="currentPassword" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" required>
+                                <label for="currentPassword"
+                                    class="text-sm font-semibold block mb-2 text-gray-600">รหัสผ่านปัจจุบัน</label>
+                                <input type="password" id="currentPassword"
+                                    class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" required>
                             </div>
                             <div>
-                                <label for="newPassword" class="text-sm font-semibold block mb-2 text-gray-600">รหัสผ่านใหม่</label>
-                                <input type="password" id="newPassword" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" required>
+                                <label for="newPassword"
+                                    class="text-sm font-semibold block mb-2 text-gray-600">รหัสผ่านใหม่</label>
+                                <input type="password" id="newPassword"
+                                    class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" required>
                             </div>
-                             <div>
-                                <label for="confirmPassword" class="text-sm font-semibold block mb-2 text-gray-600">ยืนยันรหัสผ่านใหม่</label>
-                                <input type="password" id="confirmPassword" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" required>
+                            <div>
+                                <label for="confirmPassword"
+                                    class="text-sm font-semibold block mb-2 text-gray-600">ยืนยันรหัสผ่านใหม่</label>
+                                <input type="password" id="confirmPassword"
+                                    class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl" required>
                             </div>
                             <div class="pt-4 flex justify-end">
-                                <button type="submit" class="text-white bg-emerald-500 hover:bg-emerald-600 font-bold rounded-xl px-6 py-3 text-center transition">เปลี่ยนรหัสผ่าน</button>
+                                <button type="submit"
+                                    class="text-white bg-emerald-500 hover:bg-emerald-600 font-bold rounded-xl px-6 py-3 text-center transition">เปลี่ยนรหัสผ่าน</button>
                             </div>
                         </form>
                     </div>
@@ -168,7 +234,8 @@
                     <div class="bg-white p-6 rounded-2xl shadow-md mt-8 border border-red-200">
                         <h2 class="text-xl font-bold text-red-600 mb-4">ออกจากระบบ</h2>
                         <p class="text-gray-600 mb-4">คลิกปุ่มด้านล่างเพื่อออกจากระบบอย่างปลอดภัย</p>
-                        <button id="logoutBtn" class="text-white bg-red-500 hover:bg-red-600 font-bold rounded-xl px-6 py-3 text-center transition flex items-center space-x-2">
+                        <button id="logoutBtn"
+                            class="text-white bg-red-500 hover:bg-red-600 font-bold rounded-xl px-6 py-3 text-center transition flex items-center space-x-2">
                             <i class="ph-sign-out text-xl"></i>
                             <span>ออกจากระบบ</span>
                         </button>
@@ -190,7 +257,7 @@
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-2" id="successTitle">บันทึกสำเร็จ!</h3>
             <p class="text-gray-600 mb-6" id="successMessage">ข้อมูลของคุณได้รับการอัปเดตเรียบร้อยแล้ว</p>
-            <button onclick="closeSuccessModal()" 
+            <button onclick="closeSuccessModal()"
                 class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-xl transition duration-300">
                 ตกลง
             </button>
@@ -203,13 +270,14 @@
             <div class="error-icon mb-4">
                 <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
                     <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
                     </svg>
                 </div>
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-2">เกิดข้อผิดพลาด</h3>
             <p id="errorMessage" class="text-gray-600 mb-6">กรุณาตรวจสอบข้อมูลและลองอีกครั้ง</p>
-            <button onclick="closeErrorModal()" 
+            <button onclick="closeErrorModal()"
                 class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-xl transition duration-300">
                 ลองอีกครั้ง
             </button>
@@ -222,25 +290,27 @@
             <div class="mb-4">
                 <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto">
                     <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z">
+                        </path>
                     </svg>
                 </div>
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-2">ยืนยันการออกจากระบบ</h3>
             <p class="text-gray-600 mb-6">คุณแน่ใจหรือไม่ว่าต้องการออกจากระบบ?</p>
             <div class="flex space-x-3">
-                <button onclick="closeLogoutModal()" 
+                <button onclick="closeLogoutModal()"
                     class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-xl transition duration-300">
                     ยกเลิก
                 </button>
-                <button onclick="confirmLogout()" 
+                <button onclick="confirmLogout()"
                     class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl transition duration-300">
                     ออกจากระบบ
                 </button>
             </div>
         </div>
     </div>
-    
+
     <script>
         // Token Management System
         const AuthManager = {
@@ -248,18 +318,18 @@
                 try {
                     const tokenData = localStorage.getItem('loan_money_token');
                     if (!tokenData) return null;
-                    
+
                     const parsed = JSON.parse(tokenData);
                     const now = Date.now();
                     const tokenAge = now - parsed.timestamp;
-                    
+
                     if (tokenAge > parsed.expiresIn) {
                         console.log('Token expired, removing...');
                         this.removeToken();
                         this.redirectToLogin();
                         return null;
                     }
-                    
+
                     return parsed.token;
                 } catch (error) {
                     console.error('Error parsing token:', error);
@@ -272,6 +342,12 @@
                 localStorage.removeItem('loan_money_token');
                 localStorage.removeItem('loan_money_user');
                 console.log('All tokens and user data cleared');
+            },
+
+            // Save user information
+            saveUser(user) {
+                localStorage.setItem('loan_money_user', JSON.stringify(user));
+                console.log('User data saved:', user);
             },
 
             getUser() {
@@ -314,15 +390,15 @@
                         const parsed = JSON.parse(tokenData);
                         const now = Date.now();
                         const tokenAge = now - parsed.timestamp;
-                        
+
                         if (tokenAge > parsed.expiresIn) {
                             console.log('Token expired, logging out...');
-                            
+
                             // Show expiry message before redirect
                             if (typeof showMessage === 'function') {
                                 showMessage('⏰ เซสชันหมดอายุแล้ว กำลังนำท่านกลับสู่หน้าเข้าสู่ระบบ...', true);
                             }
-                            
+
                             // Delay logout to let user see the message
                             setTimeout(() => {
                                 this.removeToken();
@@ -337,6 +413,99 @@
             }
         };
 
+        // API Helper for Profile Management
+        const API_BASE_URL = 'http://localhost:8080/api/v1';
+
+        const ProfileAPI = {
+            // Update user profile (full name)
+            async updateProfile(profileData) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) {
+                        throw new Error('ไม่พบข้อมูลการเข้าสู่ระบบ');
+                    }
+
+                    const response = await fetch(`${API_BASE_URL}/profile`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(profileData)
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์');
+                    }
+
+                    return { success: true, data };
+                } catch (error) {
+                    console.error('Profile API Error:', error);
+                    return { success: false, error: error.message };
+                }
+            },
+
+            // Change password
+            async changePassword(passwordData) {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) {
+                        throw new Error('ไม่พบข้อมูลการเข้าสู่ระบบ');
+                    }
+
+                    const response = await fetch(`${API_BASE_URL}/change-password`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(passwordData)
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน');
+                    }
+
+                    return { success: true, data };
+                } catch (error) {
+                    console.error('Change Password API Error:', error);
+                    return { success: false, error: error.message };
+                }
+            },
+
+            // Get user profile
+            async getProfile() {
+                try {
+                    const token = AuthManager.getToken();
+                    if (!token) {
+                        throw new Error('ไม่พบข้อมูลการเข้าสู่ระบบ');
+                    }
+
+                    const response = await fetch(`${API_BASE_URL}/profile`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'เกิดข้อผิดพลาดในการดึงข้อมูลโปรไฟล์');
+                    }
+
+                    return { success: true, data };
+                } catch (error) {
+                    console.error('Get Profile API Error:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+        };
+
         // Message display function (in addition to existing modals)
         function showMessage(message, isError = false) {
             // Create a message element if it doesn't exist
@@ -347,14 +516,14 @@
                 messageDiv.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md';
                 document.body.appendChild(messageDiv);
             }
-            
+
             messageDiv.textContent = message;
-            messageDiv.className = isError 
+            messageDiv.className = isError
                 ? 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md bg-red-100 border border-red-300 text-red-700'
                 : 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md bg-green-100 border border-green-300 text-green-700';
-            
+
             messageDiv.style.display = 'block';
-            
+
             // Hide message after 3 seconds
             setTimeout(() => {
                 messageDiv.style.display = 'none';
@@ -381,10 +550,10 @@
             const modal = document.getElementById('successModal');
             const titleElement = document.getElementById('successTitle');
             const messageElement = document.getElementById('successMessage');
-            
+
             if (titleElement) titleElement.textContent = title;
             if (messageElement) messageElement.textContent = message;
-            
+
             modal.style.display = 'flex';
             setTimeout(() => {
                 modal.classList.add('show');
@@ -394,9 +563,9 @@
         function showErrorModal(message = 'กรุณาตรวจสอบข้อมูลและลองอีกครั้ง') {
             const modal = document.getElementById('errorModal');
             const errorMessage = document.getElementById('errorMessage');
-            
+
             if (errorMessage) errorMessage.textContent = message;
-            
+
             modal.style.display = 'flex';
             setTimeout(() => {
                 modal.classList.add('show');
@@ -464,49 +633,112 @@
             }
         });
 
+        // --- Load User Profile Data ---
+        async function loadUserProfile() {
+            try {
+                // First try to get from localStorage
+                const user = AuthManager.getUser();
+                if (user) {
+                    document.getElementById('userFullName').textContent = user.full_name || user.username || 'User';
+                    document.getElementById('userUsername').textContent = `@${user.username || 'username'}`;
+                    document.getElementById('fullName').value = user.full_name || '';
+                    document.getElementById('username').value = user.username || '';
+                }
+
+                // Then fetch fresh data from API
+                const result = await ProfileAPI.getProfile();
+                if (result.success) {
+                    const profileData = result.data;
+
+                    // Update form fields
+                    document.getElementById('fullName').value = profileData.full_name || '';
+                    document.getElementById('username').value = profileData.username || '';
+                    document.getElementById('userFullName').textContent = profileData.full_name || profileData.username || 'User';
+                    document.getElementById('userUsername').textContent = `@${profileData.username || 'username'}`;
+
+                    // Update localStorage
+                    AuthManager.saveUser(profileData);
+                } else {
+                    console.error('Failed to load profile:', result.error);
+                    // Continue with localStorage data if API fails
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                // Use fallback data
+                document.getElementById('userFullName').textContent = 'User';
+                document.getElementById('userUsername').textContent = '@username';
+            }
+        }
+
         // --- Initial Load ---
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('userFullName').textContent = 'Ploy';
-            
-            // Test buttons functionality
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load user profile data
+            await loadUserProfile();
+
             console.log('Page loaded successfully');
             console.log('Profile form:', document.getElementById('profileForm'));
             console.log('Password form:', document.getElementById('passwordForm'));
             console.log('Logout buttons:', document.getElementById('logoutButton'), document.getElementById('logoutBtn'));
         });
-        
+
         // --- Profile Form Submission ---
-        document.getElementById('profileForm').addEventListener('submit', (e) => {
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const fullName = document.getElementById('fullName').value.trim();
-            
+            const submitButton = e.target.querySelector('button[type="submit"]');
+
             // Basic validation
             if (!fullName || fullName.length < 2) {
                 showErrorModal('กรุณากรอกชื่อ-นามสกุลให้ถูกต้อง (อย่างน้อย 2 ตัวอักษร)');
                 return;
             }
 
-            const profileData = {
-                fullName: fullName,
-            };
-            console.log('Updating profile:', profileData);
-            
-            // Simulate API call
-            setTimeout(() => {
-                showSuccessModal('อัปเดตโปรไฟล์สำเร็จ!', 'ข้อมูลโปรไฟล์ของคุณได้รับการอัปเดตเรียบร้อยแล้ว');
-                // Update the display name in header
-                document.getElementById('userFullName').textContent = fullName;
-            }, 500);
-            
-            // TODO: API call to update user info
+            // Show loading state
+            const originalText = submitButton.textContent;
+            submitButton.textContent = 'กำลังบันทึก...';
+            submitButton.disabled = true;
+
+            try {
+                const profileData = {
+                    full_name: fullName
+                };
+                console.log('Updating profile:', profileData);
+
+                // Call API to update profile
+                const result = await ProfileAPI.updateProfile(profileData);
+
+                if (result.success) {
+                    showSuccessModal('อัปเดตโปรไฟล์สำเร็จ!', 'ข้อมูลโปรไฟล์ของคุณได้รับการอัปเดตเรียบร้อยแล้ว');
+
+                    // Update the display name in header
+                    document.getElementById('userFullName').textContent = fullName;
+
+                    // Update user data in localStorage
+                    const currentUser = AuthManager.getUser();
+                    if (currentUser) {
+                        currentUser.full_name = fullName;
+                        AuthManager.saveUser(currentUser);
+                    }
+                } else {
+                    showErrorModal(result.error || 'เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์');
+                }
+            } catch (error) {
+                console.error('Profile update error:', error);
+                showErrorModal('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+            } finally {
+                // Restore button state
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
+            }
         });
-        
+
         // --- Password Form Submission ---
-        document.getElementById('passwordForm').addEventListener('submit', (e) => {
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
+            const submitButton = e.target.querySelector('button[type="submit"]');
 
             // Enhanced validation
             if (!currentPassword || !newPassword || !confirmPassword) {
@@ -529,21 +761,46 @@
                 return;
             }
 
-            const passwordData = { currentPassword, newPassword };
-            console.log('Changing password...');
-            
-            // Simulate API call
-            setTimeout(() => {
-                // Simulate wrong current password (for demo)
-                if (currentPassword !== 'admin123' && currentPassword !== 'demo123') {
-                    showErrorModal('รหัสผ่านปัจจุบันไม่ถูกต้อง');
-                } else {
+            // Show loading state
+            const originalText = submitButton.textContent;
+            submitButton.textContent = 'กำลังเปลี่ยนรหัสผ่าน...';
+            submitButton.disabled = true;
+
+            try {
+                const passwordData = {
+                    current_password: currentPassword,
+                    new_password: newPassword
+                };
+                console.log('Changing password...');
+
+                // Call API to change password
+                const result = await ProfileAPI.changePassword(passwordData);
+
+                if (result.success) {
                     showSuccessModal('เปลี่ยนรหัสผ่านสำเร็จ!', 'รหัสผ่านของคุณได้รับการเปลี่ยนแปลงเรียบร้อยแล้ว');
-                    e.target.reset();
+                    e.target.reset(); // Clear form
+                } else {
+                    // Handle specific error messages
+                    let errorMessage = result.error;
+
+                    if (errorMessage.toLowerCase().includes('current password') ||
+                        errorMessage.toLowerCase().includes('wrong password') ||
+                        errorMessage.toLowerCase().includes('incorrect password')) {
+                        errorMessage = 'รหัสผ่านปัจจุบันไม่ถูกต้อง กรุณาตรวจสอบและลองใหม่อีกครั้ง';
+                    } else if (errorMessage.toLowerCase().includes('password requirements')) {
+                        errorMessage = 'รหัสผ่านใหม่ไม่เป็นไปตามเงื่อนไขที่กำหนด';
+                    }
+
+                    showErrorModal(errorMessage);
                 }
-            }, 500);
-            
-            // TODO: API call to change password
+            } catch (error) {
+                console.error('Password change error:', error);
+                showErrorModal('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+            } finally {
+                // Restore button state
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
+            }
         });
 
         // --- Logout Logic ---
@@ -551,7 +808,7 @@
             // Make sure elements exist before adding event listeners
             const logoutButton = document.getElementById('logoutButton');
             const logoutBtn = document.getElementById('logoutBtn');
-            
+
             if (logoutButton) {
                 logoutButton.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -559,7 +816,7 @@
                     showLogoutModal();
                 });
             }
-            
+
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -570,4 +827,5 @@
         });
     </script>
 </body>
+
 </html>

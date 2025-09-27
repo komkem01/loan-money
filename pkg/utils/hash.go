@@ -90,3 +90,12 @@ func VerifyPassword(password, encodedHash string) (bool, error) {
 	// Use constant time comparison to prevent timing attacks
 	return subtle.ConstantTimeCompare(hash, otherHash) == 1, nil
 }
+
+// CheckPasswordHash is an alias for VerifyPassword for consistency
+func CheckPasswordHash(password, hash string) bool {
+	match, err := VerifyPassword(password, hash)
+	if err != nil {
+		return false
+	}
+	return match
+}

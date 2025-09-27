@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -67,12 +68,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// Create user
 	var user models.User
 	query := `
-		INSERT INTO users (username, password, full_name) 
+		INSERT INTO users (username, password_hash, full_name) 
 		VALUES ($1, $2, $3) 
-		RETURNING id, username, full_name, created_at`
+		RETURNING id, username, full_name, created_at, updated_at`
 
 	err = h.db.QueryRow(query, req.Username, hashedPassword, req.FullName).Scan(
-		&user.ID, &user.Username, &user.FullName, &user.CreatedAt)
+		&user.ID, &user.Username, &user.FullName, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to create user")
 		return
@@ -111,10 +112,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Get user from database
 	var user models.User
 	var hashedPassword string
-	query := "SELECT id, username, password, full_name, created_at FROM users WHERE username = $1"
+	query := "SELECT id, username, password_hash, full_name, created_at, updated_at FROM users WHERE username = $1"
 
 	err := h.db.QueryRow(query, req.Username).Scan(
-		&user.ID, &user.Username, &hashedPassword, &user.FullName, &user.CreatedAt)
+		&user.ID, &user.Username, &hashedPassword, &user.FullName, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			respondWithError(w, http.StatusUnauthorized, "Invalid username or password")
@@ -187,12 +188,14 @@ func (h *AuthHandler) GetUserFromToken(r *http.Request) (*models.User, error) {
 
 // Helper functions
 func respondWithError(w http.ResponseWriter, code int, message string) {
+	log.Printf("API Error: %d - %s", code, message)
 	respondWithJSON(w, code, models.ErrorResponse{Error: message})
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	response, err := json.Marshal(payload)
 	if err != nil {
+		log.Printf("JSON Encoding Error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"error":"Failed to encode response"}`))
 		return

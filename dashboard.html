@@ -76,15 +76,23 @@
             <header class="bg-white/80 backdrop-blur-sm shadow-md sticky top-0 z-20">
                 <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex items-center justify-between h-16">
-                        <!-- Mobile Menu Button -->
                         <button id="menuBtn" class="md:hidden text-gray-600 hover:text-emerald-600">
                             <i class="ph-list text-3xl"></i>
                         </button>
-                        <!-- Spacer to push user menu to the right -->
                         <div class="flex-1"></div>
-                        <!-- User Menu -->
                         <div class="flex items-center space-x-4">
-                            <span class="font-semibold text-gray-700 hidden sm:block">Welcome, <span id="userFullName">User</span>!</span>
+                            <div class="hidden sm:flex items-center space-x-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold text-sm"
+                                        id="userAvatar">
+                                        U
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="font-semibold text-gray-700 text-sm" id="userFullName">User</span>
+                                        <span class="text-xs text-gray-500" id="userUsername">@username</span>
+                                    </div>
+                                </div>
+                            </div>
                             <button id="logoutButton" class="text-gray-500 hover:text-emerald-600 focus:outline-none">
                                 <i class="ph-sign-out text-2xl"></i>
                             </button>
@@ -388,6 +396,73 @@
             sidebar.classList.toggle('-translate-x-full');
         });
 
+        // --- API Functions ---
+        const API = {
+            BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                ? 'http://localhost:8080/api/v1'  // Development mode 
+                : '/api/v1', // Production mode
+            
+            async request(endpoint, options = {}) {
+                const url = `${this.BASE_URL}${endpoint}`;
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...AuthManager.getAuthHeaders(),
+                    ...options.headers
+                };
+                
+                try {
+                    const response = await fetch(url, {
+                        ...options,
+                        headers
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+                        throw new Error(errorData.error || `HTTP ${response.status}`);
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error(`API request failed for ${endpoint}:`, error);
+                    showMessage(error.message || 'API request failed', true);
+                    throw error;
+                }
+            },
+            
+            // Dashboard API calls
+            getDashboardStats() {
+                return this.request('/dashboard/stats');
+            },
+            
+            getLoans(page = 1, limit = 10) {
+                return this.request(`/loans?page=${page}&limit=${limit}`);
+            },
+            
+            getRecentTransactions(limit = 5) {
+                return this.request(`/dashboard/recent-transactions?limit=${limit}`);
+            },
+            
+            getLoanSummary(limit = 10, status = '') {
+                const statusParam = status ? `&status=${status}` : '';
+                return this.request(`/dashboard/loan-summary?limit=${limit}${statusParam}`);
+            },
+            
+            getMonthlyStats() {
+                return this.request('/dashboard/monthly-stats');
+            },
+            
+            getOverdueLoans() {
+                return this.request('/dashboard/overdue-loans');
+            },
+            
+            createLoan(loanData) {
+                return this.request('/loans', {
+                    method: 'POST',
+                    body: JSON.stringify(loanData)
+                });
+            }
+        };
+
         // --- Existing Dashboard Javascript ---
         const addLoanBtn = document.getElementById('addLoanBtn');
         const loanModal = document.getElementById('loanModal');
@@ -421,23 +496,15 @@
             if (e.target === loanModal) closeModal();
         });
         
-        const mockLoans = [
-            { id: 1, borrower_name: 'Alice', amount: 5000, status: 'active', due_date: '2025-10-15', total_paid: 1000 },
-            { id: 2, borrower_name: 'Bob', amount: 2000, status: 'paid', due_date: '2025-09-01', total_paid: 2000 },
-            { id: 3, borrower_name: 'Charlie', amount: 10000, status: 'overdue', due_date: '2025-09-20', total_paid: 5000 },
-            { id: 4, borrower_name: 'David', amount: 7500, status: 'active', due_date: null, total_paid: 2500 },
-            { id: 5, borrower_name: 'Emma', amount: 3000, status: 'active', due_date: '2025-11-01', total_paid: 500 },
-            { id: 6, borrower_name: 'Frank', amount: 8000, status: 'overdue', due_date: '2025-08-15', total_paid: 2000 },
-            { id: 7, borrower_name: 'Grace', amount: 4500, status: 'paid', due_date: '2025-09-10', total_paid: 4500 },
-            { id: 8, borrower_name: 'Henry', amount: 6000, status: 'active', due_date: '2025-12-01', total_paid: 1500 },
-            { id: 9, borrower_name: 'Ivy', amount: 2500, status: 'active', due_date: '2025-10-30', total_paid: 800 },
-            { id: 10, borrower_name: 'Jack', amount: 9000, status: 'overdue', due_date: '2025-07-20', total_paid: 3000 },
-        ];
+        // Dashboard data variables
+        let dashboardStats = null;
+        let allLoans = [];
+        let dashboardLoans = [];
 
         // --- Dashboard Pagination Variables ---
         let dashboardCurrentPage = 1;
         const dashboardItemsPerPage = 6;
-        let dashboardFilteredLoans = [...mockLoans];
+        let dashboardFilteredLoans = [];
         
         // --- Dashboard Pagination Functions ---
         const updateDashboardPaginationInfo = () => {
@@ -517,11 +584,12 @@
             }
             
             loanListContainer.innerHTML = loans.map(loan => {
-                const remaining = loan.amount - loan.total_paid;
-                const progress = (loan.total_paid / loan.amount) * 100;
+                const totalPaid = loan.total_paid || 0;
+                const remaining = loan.amount - totalPaid;
+                const progress = loan.amount > 0 ? (totalPaid / loan.amount) * 100 : 0;
 
                 let statusBadge;
-                if (loan.status === 'paid') {
+                if (loan.status === 'completed' || loan.status === 'paid') {
                     statusBadge = `<span class="px-2 py-1 text-xs font-bold text-green-800 bg-green-200 rounded-full">Paid</span>`;
                 } else if (loan.status === 'overdue') {
                     statusBadge = `<span class="px-2 py-1 text-xs font-bold text-red-800 bg-red-200 rounded-full">Overdue</span>`;
@@ -540,7 +608,7 @@
                             <div class="bg-emerald-500 h-2.5 rounded-full" style="width: ${progress}%"></div>
                         </div>
                         <p class="text-xs text-gray-500 mt-1">
-                            Paid ฿${loan.total_paid.toLocaleString()} of ฿${loan.amount.toLocaleString()}
+                            Paid ฿${totalPaid.toLocaleString()} of ฿${loan.amount.toLocaleString()}
                         </p>
                     </div>
                     <div class="hidden sm:block text-center">${statusBadge}</div>
@@ -557,23 +625,119 @@
             }).join('');
         };
         
-        const updateSummary = (loans) => {
-            const totalOwed = loans.filter(l => l.status !== 'paid').reduce((sum, l) => sum + (l.amount - l.total_paid), 0);
-            const activeLoans = loans.filter(l => l.status === 'active' || l.status === 'overdue').length;
-            const paidLoans = loans.filter(l => l.status === 'paid').length;
-            
-            document.getElementById('totalOwed').textContent = `฿${totalOwed.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('activeLoans').textContent = activeLoans;
-            document.getElementById('paidLoans').textContent = paidLoans;
+        const updateSummary = (stats) => {
+            if (stats) {
+                // Use API stats if available
+                document.getElementById('totalOwed').textContent = `฿${(stats.total_debt_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('activeLoans').textContent = stats.active_loans || 0;
+                document.getElementById('paidLoans').textContent = stats.completed_loans || 0;
+            } else {
+                // Fallback calculation from loans data
+                const totalOwed = allLoans.filter(l => l.status !== 'paid' && l.status !== 'completed').reduce((sum, l) => {
+                    const totalPaid = l.total_paid || 0;
+                    return sum + (l.amount - totalPaid);
+                }, 0);
+                const activeLoans = allLoans.filter(l => l.status === 'active' || l.status === 'overdue').length;
+                const paidLoans = allLoans.filter(l => l.status === 'paid' || l.status === 'completed').length;
+                
+                document.getElementById('totalOwed').textContent = `฿${totalOwed.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('activeLoans').textContent = activeLoans;
+                document.getElementById('paidLoans').textContent = paidLoans;
+            }
         }
 
+        // Load dashboard data from API
+        const loadDashboardData = async () => {
+            try {
+                showMessage('Loading dashboard data...', false);
+                
+                // Load dashboard data from multiple endpoints
+                const [
+                    statsResponse, 
+                    loanSummaryResponse,
+                    recentTransactionsResponse,
+                    overdueLoansResponse
+                ] = await Promise.all([
+                    API.getDashboardStats().catch(err => {
+                        console.warn('Failed to load dashboard stats:', err);
+                        return null;
+                    }),
+                    API.getLoanSummary(50).catch(err => {
+                        console.warn('Failed to load loan summary:', err);
+                        return { loans: [] };
+                    }),
+                    API.getRecentTransactions(10).catch(err => {
+                        console.warn('Failed to load recent transactions:', err);
+                        return { transactions: [] };
+                    }),
+                    API.getOverdueLoans().catch(err => {
+                        console.warn('Failed to load overdue loans:', err);
+                        return { overdue_loans: [] };
+                    })
+                ]);
+                
+                // Update global variables
+                dashboardStats = statsResponse;
+                allLoans = loanSummaryResponse.loans || [];
+                dashboardFilteredLoans = [...allLoans];
+                
+                // Store additional data for potential future use
+                window.dashboardData = {
+                    stats: statsResponse,
+                    loans: allLoans,
+                    recentTransactions: recentTransactionsResponse.transactions || [],
+                    overdueLoans: overdueLoansResponse.overdue_loans || []
+                };
+                
+                // Update UI
+                updateSummary(dashboardStats);
+                dashboardCurrentPage = 1;
+                renderDashboardCurrentPage();
+                
+                // Update user display
+                const user = AuthManager.getUser();
+                if (user) {
+                    const fullName = user.full_name || user.username || 'User';
+                    const username = user.username || 'username';
+                    
+                    // Update user info in header
+                    if (document.getElementById('userFullName')) {
+                        document.getElementById('userFullName').textContent = fullName;
+                    }
+                    if (document.getElementById('userUsername')) {
+                        document.getElementById('userUsername').textContent = `@${username}`;
+                    }
+                    if (document.getElementById('userAvatar')) {
+                        document.getElementById('userAvatar').textContent = fullName.charAt(0).toUpperCase();
+                    }
+                }
+                
+                // Log loaded data for debugging
+                console.log('Dashboard data loaded:', {
+                    stats: dashboardStats,
+                    loansCount: allLoans.length,
+                    transactionsCount: window.dashboardData.recentTransactions.length,
+                    overdueLoansCount: window.dashboardData.overdueLoans.length
+                });
+                
+                showMessage('Dashboard loaded successfully!', false);
+                
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+                showMessage('Failed to load dashboard data. Please try again.', true);
+                
+                // Show empty state
+                dashboardStats = null;
+                allLoans = [];
+                dashboardFilteredLoans = [];
+                renderDashboardCurrentPage();
+                updateSummary(null);
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize dashboard with pagination
-            dashboardFilteredLoans = [...mockLoans];
-            dashboardCurrentPage = 1;
-            renderDashboardCurrentPage();
-            updateSummary(mockLoans);
-            document.getElementById('userFullName').textContent = 'Ploy';
+            // Load dashboard data from API
+            loadDashboardData();
 
             // Add event listeners for dashboard pagination buttons
             document.getElementById('dashboardPrevBtn').addEventListener('click', () => {
@@ -590,17 +754,46 @@
             });
         });
 
-        loanForm.addEventListener('submit', (e) => {
+        loanForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const loanData = {
-                id: document.getElementById('loanId').value,
-                borrower_name: document.getElementById('borrowerName').value,
+                borrower_name: document.getElementById('borrowerName').value.trim(),
                 amount: parseFloat(document.getElementById('amount').value),
                 loan_date: document.getElementById('loanDate').value,
                 due_date: document.getElementById('dueDate').value || null,
             };
-            console.log('Submitting loan data:', loanData);
-            closeModal();
+            
+            // Validation
+            if (!loanData.borrower_name) {
+                showMessage('Please enter borrower name', true);
+                return;
+            }
+            
+            if (!loanData.amount || loanData.amount <= 0) {
+                showMessage('Please enter a valid amount', true);
+                return;
+            }
+            
+            if (!loanData.loan_date) {
+                showMessage('Please select loan date', true);
+                return;
+            }
+            
+            try {
+                showMessage('Creating loan...', false);
+                const newLoan = await API.createLoan(loanData);
+                
+                showMessage('Loan created successfully!', false);
+                closeModal();
+                
+                // Reload dashboard data to show the new loan
+                await loadDashboardData();
+                
+            } catch (error) {
+                console.error('Failed to create loan:', error);
+                showMessage('Failed to create loan. Please try again.', true);
+            }
         });
         
         logoutButton.addEventListener('click', () => {
