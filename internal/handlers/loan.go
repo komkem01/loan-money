@@ -54,7 +54,7 @@ func (h *LoanHandler) GetLoans(w http.ResponseWriter, r *http.Request) {
 	args := []interface{}{user.ID}
 	argIndex := 2
 
-	if status != "" && (status == "active" || status == "completed") {
+	if status != "" && (status == "active" || status == "completed" || status == "overdue") {
 		whereClause += fmt.Sprintf(" AND status = $%d", argIndex)
 		args = append(args, status)
 		argIndex++
@@ -414,8 +414,8 @@ func (h *LoanHandler) UpdateLoanStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Status != "active" && req.Status != "completed" {
-		respondWithError(w, http.StatusBadRequest, "Status must be either 'active' or 'completed'")
+	if req.Status != "active" && req.Status != "completed" && req.Status != "overdue" {
+		respondWithError(w, http.StatusBadRequest, "Status must be either 'active', 'completed', or 'overdue'")
 		return
 	}
 

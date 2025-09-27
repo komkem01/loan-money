@@ -16,6 +16,10 @@
         .modal {
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+            transition: backdrop-filter 0.3s ease;
+        }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #d1fae5; border-radius: 10px; }
@@ -30,8 +34,10 @@
             <!-- Logo -->
             <div class="flex items-center justify-center h-20 border-b">
                  <div class="flex items-center space-x-2">
-                    <svg class="w-10 h-10 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c1.355 0 2.707-.158 4.007-.462M12 21c-1.355 0-2.707-.158-4.007-.462m0 0A9.005 9.005 0 0112 3c1.355 0 2.707.158 4.007.462m0 0A9.005 9.005 0 0012 3C10.645 3 9.293 3.158 8 3.462m0 0c-1.233 1.043-1.936 2.528-1.936 4.218 0 2.404 1.134 4.563 2.87 5.926m1.936-4.218c.288-.242.607-.453.95-.626m0 0a4.5 4.5 0 015.172 0m-.216 4.84c1.135-.333 2.16-.822 3.091-1.456m-8.1 0c.931.634 1.956 1.123 3.091 1.456" />
+                    <svg class="w-10 h-10 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c1.355 0 2.707-.158 4.007-.462M12 21c-1.355 0-2.707-.158-4.007-.462m0 0A9.005 9.005 0 0112 3c1.355 0 2.707.158 4.007.462m0 0A9.005 9.005 0 0012 3C10.645 3 9.293 3.158 8 3.462m0 0c-1.233 1.043-1.936 2.528-1.936 4.218 0 2.404 1.134 4.563 2.87 5.926m1.936-4.218c.288-.242.607-.453.95-.626m0 0a4.5 4.5 0 015.172 0m-.216 4.84c1.135-.333 2.16-.822 3.091-1.456m-8.1 0c.931.634 1.956 1.123 3.091 1.456" />
                     </svg>
                     <span class="text-2xl font-extrabold text-gray-800">Loan Tracker</span>
                 </div>
@@ -133,7 +139,8 @@
                                             <th scope="col" class="px-6 py-3 rounded-l-lg">Borrower</th>
                                             <th scope="col" class="px-6 py-3">Amount</th>
                                             <th scope="col" class="px-6 py-3">Date</th>
-                                            <th scope="col" class="px-6 py-3 rounded-r-lg">Remark</th>
+                                            <th scope="col" class="px-6 py-3">Remark</th>
+                                            <th scope="col" class="px-6 py-3 rounded-r-lg">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="transactionTableBody">
@@ -171,7 +178,7 @@
     </div>
 
     <!-- Edit Transaction Modal -->
-    <div id="editTransactionModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black bg-opacity-50">
+    <div id="editTransactionModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black bg-opacity-50 modal-backdrop">
         <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 transform scale-95 modal">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-2xl font-extrabold text-gray-800">แก้ไขรายการชำระ</h2>
@@ -204,6 +211,62 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmationModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black bg-opacity-50 modal-backdrop">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 transform scale-95 modal">
+            <!-- Warning Icon -->
+            <div class="flex justify-center mb-6">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="ph-warning-circle text-4xl text-red-500"></i>
+                </div>
+            </div>
+            
+            <!-- Title and Message -->
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-extrabold text-gray-800 mb-3">ยืนยันการลบ</h2>
+                <p class="text-gray-600 leading-relaxed">
+                    คุณแน่ใจหรือไม่ที่จะลบรายการชำระเงินนี้? 
+                    <br><span class="font-semibold text-red-600">การดำเนินการนี้ไม่สามารถยกเลิกได้</span>
+                </p>
+                
+                <!-- Transaction Details -->
+                <div class="mt-4 p-4 bg-gray-50 rounded-xl border-l-4 border-red-400">
+                    <div class="text-left">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">ผู้กู้:</span>
+                            <span class="font-semibold text-gray-800" id="deleteBorrowerName">-</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">จำนวนเงิน:</span>
+                            <span class="font-bold text-red-600" id="deleteAmount">฿0</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">วันที่:</span>
+                            <span class="text-gray-800" id="deleteDate">-</span>
+                        </div>
+                        <div class="flex justify-between items-start" id="deleteRemarkContainer" style="display: none;">
+                            <span class="text-sm text-gray-600">หมายเหตุ:</span>
+                            <span class="text-gray-800 text-right max-w-40 break-words" id="deleteRemark">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex space-x-3">
+                <button type="button" onclick="closeDeleteModal()" 
+                        class="flex-1 px-4 py-3 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-xl font-medium transition-colors">
+                    <i class="ph-x mr-2"></i>ยกเลิก
+                </button>
+                <button type="button" onclick="confirmDeleteTransaction()" 
+                        class="flex-1 px-4 py-3 text-white bg-red-500 hover:bg-red-600 rounded-xl font-medium transition-colors"
+                        id="confirmDeleteBtn">
+                    <i class="ph-trash mr-2"></i>ลบรายการ
+                </button>
+            </div>
         </div>
     </div>
     
@@ -680,7 +743,7 @@
                                         title="แก้ไข">
                                     <i class="ph ph-pencil-simple text-lg"></i>
                                 </button>
-                                <button onclick="deleteTransaction('${tx.id}')" 
+                                <button onclick="showDeleteConfirmation('${tx.id}')" 
                                         class="text-red-600 hover:text-red-800 p-1 rounded"
                                         title="ลบ">
                                     <i class="ph ph-trash text-lg"></i>
@@ -692,7 +755,83 @@
             }).join('');
         };
 
-        // --- Transaction Edit/Delete Functions ---
+        // --- Delete Confirmation Modal Functions ---
+        let transactionToDelete = null;
+
+        const showDeleteConfirmation = (transactionId) => {
+            // Find the transaction data
+            const transaction = filteredTransactions.find(tx => tx.id === transactionId);
+            if (!transaction) {
+                showMessage('ไม่พบข้อมูลรายการชำระ', true);
+                return;
+            }
+
+            transactionToDelete = transactionId;
+
+            // Populate modal with transaction details
+            document.getElementById('deleteBorrowerName').textContent = transaction.borrower_name || 'Unknown';
+            document.getElementById('deleteAmount').textContent = `฿${transaction.amount.toLocaleString()}`;
+            document.getElementById('deleteDate').textContent = transaction.created_at ? 
+                new Date(transaction.created_at).toLocaleDateString('th-TH') : '-';
+            
+            // Show/hide remark section
+            const remarkContainer = document.getElementById('deleteRemarkContainer');
+            const remarkText = document.getElementById('deleteRemark');
+            if (transaction.remark && transaction.remark.trim()) {
+                remarkText.textContent = transaction.remark;
+                remarkContainer.style.display = 'flex';
+            } else {
+                remarkContainer.style.display = 'none';
+            }
+
+            // Show modal
+            const modal = document.getElementById('deleteConfirmationModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.querySelector('.modal').classList.remove('scale-95');
+            }, 10);
+        };
+
+        const closeDeleteModal = () => {
+            const modal = document.getElementById('deleteConfirmationModal');
+            modal.querySelector('.modal').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+            transactionToDelete = null;
+        };
+
+        const confirmDeleteTransaction = async () => {
+            if (!transactionToDelete) return;
+
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            const originalText = confirmBtn.innerHTML;
+            
+            try {
+                // Show loading state
+                confirmBtn.innerHTML = '<i class="ph-spinner ph-spin mr-2"></i>กำลังลบ...';
+                confirmBtn.disabled = true;
+
+                await TransactionAPI.deleteTransaction(transactionToDelete);
+                
+                showMessage('ลบรายการชำระเงินเรียบร้อยแล้ว');
+                closeDeleteModal();
+                await loadTransactions();
+                await loadLoans(); // Refresh loan amounts
+
+            } catch (error) {
+                console.error('Error deleting transaction:', error);
+                showMessage('ไม่สามารถลบรายการได้: ' + error.message, true);
+            } finally {
+                // Reset button state
+                confirmBtn.innerHTML = originalText;
+                confirmBtn.disabled = false;
+            }
+        };
+
+        // --- Transaction Edit Functions ---
         let currentTransactionId = null;
         let currentTransactionData = null;
 
@@ -738,22 +877,6 @@
             }, 300);
             currentTransactionId = null;
             currentTransactionData = null;
-        };
-
-        const deleteTransaction = async (transactionId) => {
-            if (!confirm('คุณแน่ใจหรือไม่ที่จะลบรายการชำระเงินนี้?')) {
-                return;
-            }
-
-            try {
-                await TransactionAPI.deleteTransaction(transactionId);
-                showMessage('ลบรายการชำระเงินเรียบร้อยแล้ว');
-                await loadTransactions();
-                await loadLoans(); // Refresh loan amounts
-            } catch (error) {
-                console.error('Error deleting transaction:', error);
-                showMessage('ไม่สามารถลบรายการได้: ' + error.message, true);
-            }
         };
 
         // --- Load User Profile ---

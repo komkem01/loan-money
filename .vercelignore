@@ -1,0 +1,11 @@
+bin/
+*.exe
+.env
+.git/
+.vscode/
+node_modules/
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db

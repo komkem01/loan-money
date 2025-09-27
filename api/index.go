@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"loan-money/internal/auth"
 	"loan-money/internal/database"
 	"loan-money/internal/handlers"
@@ -46,6 +45,10 @@ func initializeApp() {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(db)
+	profileHandler := handlers.NewProfileHandler(db)
+	loanHandler := handlers.NewLoanHandler(db)
+	transactionHandler := handlers.NewTransactionHandler(db)
+	dashboardHandler := handlers.NewDashboardHandler(db)
 
 	// Setup routes
 	router = mux.NewRouter()
@@ -68,17 +71,33 @@ func initializeApp() {
 	protected := api.PathPrefix("").Subrouter()
 	protected.Use(auth.AuthMiddleware)
 
-	// User profile endpoint (example of protected route)
-	protected.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
-		user, ok := auth.GetUserFromContext(r)
-		if !ok {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, `{"user_id":"%s","username":"%s"}`, user.ID, user.Username)
-	}).Methods("GET")
+	// Profile management endpoints
+	protected.HandleFunc("/profile", profileHandler.GetProfile).Methods("GET")
+	protected.HandleFunc("/profile", profileHandler.UpdateProfile).Methods("PATCH")
+	protected.HandleFunc("/change-password", profileHandler.ChangePassword).Methods("PATCH")
+
+	// Dashboard endpoints
+	protected.HandleFunc("/dashboard/stats", dashboardHandler.GetDashboardStats).Methods("GET")
+	protected.HandleFunc("/dashboard/recent-transactions", dashboardHandler.GetRecentTransactions).Methods("GET")
+	protected.HandleFunc("/dashboard/loan-summary", dashboardHandler.GetLoanSummary).Methods("GET")
+	protected.HandleFunc("/dashboard/monthly-stats", dashboardHandler.GetMonthlyStats).Methods("GET")
+	protected.HandleFunc("/dashboard/overdue-loans", dashboardHandler.GetOverdueLoans).Methods("GET")
+
+	// Loan management endpoints
+	protected.HandleFunc("/loans", loanHandler.GetLoans).Methods("GET")
+	protected.HandleFunc("/loans", loanHandler.CreateLoan).Methods("POST")
+	protected.HandleFunc("/loans/{id}", loanHandler.GetLoan).Methods("GET")
+	protected.HandleFunc("/loans/{id}", loanHandler.UpdateLoan).Methods("PATCH")
+	protected.HandleFunc("/loans/{id}", loanHandler.DeleteLoan).Methods("DELETE")
+	protected.HandleFunc("/loans/{id}/status", loanHandler.UpdateLoanStatus).Methods("PATCH")
+
+	// Transaction management endpoints
+	protected.HandleFunc("/transactions", transactionHandler.GetTransactions).Methods("GET")
+	protected.HandleFunc("/transactions", transactionHandler.CreateTransaction).Methods("POST")
+	protected.HandleFunc("/transactions/{id}", transactionHandler.GetTransaction).Methods("GET")
+	protected.HandleFunc("/transactions/{id}", transactionHandler.UpdateTransaction).Methods("PATCH")
+	protected.HandleFunc("/transactions/{id}", transactionHandler.DeleteTransaction).Methods("DELETE")
+	protected.HandleFunc("/loans/{loan_id}/transactions", transactionHandler.GetTransactionsByLoan).Methods("GET")
 
 	// Setup CORS
 	c := cors.New(cors.Options{

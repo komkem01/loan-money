@@ -33,14 +33,14 @@ type Loan struct {
 
 // Transaction represents a transaction in the system
 type Transaction struct {
-	ID          uuid.UUID  `json:"id" db:"id"`
-	LoanID      uuid.UUID  `json:"loan_id" db:"loan_id"`
-	Amount      float64    `json:"amount" db:"amount"`
-	Remark      *string    `json:"remark,omitempty" db:"remark"`
-	PaymentDate *time.Time `json:"payment_date,omitempty" db:"payment_date"`
-	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
-	DeletedAt   *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
+	ID          uuid.UUID `json:"id" db:"id"`
+	LoanID      uuid.UUID `json:"loan_id" db:"loan_id"`
+	Amount      float64   `json:"amount" db:"amount"`
+	Remark      *string   `json:"remark,omitempty" db:"remark"`
+	PaymentDate *string   `json:"payment_date,omitempty" db:"payment_date"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	DeletedAt   *string   `json:"deleted_at,omitempty" db:"deleted_at"`
 }
 
 // AuthRequest represents login/register request
@@ -115,6 +115,7 @@ type DashboardStats struct {
 	TotalLoans      int     `json:"total_loans"`
 	ActiveLoans     int     `json:"active_loans"`
 	CompletedLoans  int     `json:"completed_loans"`
+	OverdueLoans    int     `json:"overdue_loans"`
 	TotalLoanAmount float64 `json:"total_loan_amount"`
 	TotalPaidAmount float64 `json:"total_paid_amount"`
 	TotalDebtAmount float64 `json:"total_debt_amount"`

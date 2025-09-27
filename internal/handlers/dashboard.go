@@ -29,19 +29,24 @@ func (h *DashboardHandler) GetDashboardStats(w http.ResponseWriter, r *http.Requ
 
 	var stats models.DashboardStats
 
+	// user.ID is already a UUID
+	userID := user.ID
+
 	// Get loan counts and amounts
 	err := h.db.QueryRow(`
 		SELECT 
 			COUNT(*) as total_loans,
 			COUNT(CASE WHEN status = 'active' THEN 1 END) as active_loans,
 			COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_loans,
+			COUNT(CASE WHEN status = 'overdue' THEN 1 END) as overdue_loans,
 			COALESCE(SUM(amount), 0) as total_loan_amount
 		FROM loans 
-		WHERE user_id = $1
-	`, user.ID).Scan(
+		WHERE user_id = $1 AND deleted_at IS NULL
+	`, userID).Scan(
 		&stats.TotalLoans,
 		&stats.ActiveLoans,
 		&stats.CompletedLoans,
+		&stats.OverdueLoans,
 		&stats.TotalLoanAmount,
 	)
 
@@ -55,8 +60,8 @@ func (h *DashboardHandler) GetDashboardStats(w http.ResponseWriter, r *http.Requ
 		SELECT COALESCE(SUM(t.amount), 0) as total_paid
 		FROM transactions t
 		JOIN loans l ON t.loan_id = l.id
-		WHERE l.user_id = $1
-	`, user.ID).Scan(&stats.TotalPaidAmount)
+		WHERE l.user_id = $1 AND l.deleted_at IS NULL AND t.deleted_at IS NULL
+	`, userID).Scan(&stats.TotalPaidAmount)
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to retrieve transaction statistics")
@@ -77,6 +82,9 @@ func (h *DashboardHandler) GetRecentTransactions(w http.ResponseWriter, r *http.
 		return
 	}
 
+	// user.ID is already a UUID
+	userID := user.ID
+
 	// Parse limit parameter (default: 5, max: 20)
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	if limit < 1 || limit > 20 {
@@ -89,11 +97,11 @@ func (h *DashboardHandler) GetRecentTransactions(w http.ResponseWriter, r *http.
 			l.borrower_name, l.amount as loan_amount, l.status as loan_status
 		FROM transactions t
 		JOIN loans l ON t.loan_id = l.id
-		WHERE l.user_id = $1
+		WHERE l.user_id = $1 AND l.deleted_at IS NULL AND t.deleted_at IS NULL
 		ORDER BY t.created_at DESC
 		LIMIT $2`
 
-	rows, err := h.db.Query(query, user.ID, limit)
+	rows, err := h.db.Query(query, userID, limit)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to retrieve recent transactions")
 		return
@@ -145,6 +153,9 @@ func (h *DashboardHandler) GetLoanSummary(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// user.ID is already a UUID
+	userID := user.ID
+
 	// Parse limit parameter (default: 10, max: 50)
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	if limit < 1 || limit > 50 {
@@ -154,11 +165,11 @@ func (h *DashboardHandler) GetLoanSummary(w http.ResponseWriter, r *http.Request
 	status := r.URL.Query().Get("status")
 
 	// Build WHERE clause
-	whereClause := "WHERE l.user_id = $1"
-	args := []interface{}{user.ID}
+	whereClause := "WHERE l.user_id = $1 AND l.deleted_at IS NULL"
+	args := []interface{}{userID}
 	argIndex := 2
 
-	if status != "" && (status == "active" || status == "completed") {
+	if status != "" && (status == "active" || status == "completed" || status == "overdue") {
 		whereClause += " AND l.status = $2"
 		args = append(args, status)
 		argIndex++
@@ -171,7 +182,7 @@ func (h *DashboardHandler) GetLoanSummary(w http.ResponseWriter, r *http.Request
 			COALESCE(SUM(t.amount), 0) as total_paid,
 			(l.amount - COALESCE(SUM(t.amount), 0)) as remaining_debt
 		FROM loans l
-		LEFT JOIN transactions t ON l.id = t.loan_id
+		LEFT JOIN transactions t ON l.id = t.loan_id AND t.deleted_at IS NULL
 		` + whereClause + `
 		GROUP BY l.id, l.borrower_name, l.amount, l.status, l.loan_date, l.due_date, l.created_at, l.updated_at
 		ORDER BY l.created_at DESC
@@ -199,7 +210,7 @@ func (h *DashboardHandler) GetLoanSummary(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		loan.UserID = user.ID
+		loan.UserID = userID
 		loans = append(loans, loan)
 	}
 
@@ -217,19 +228,22 @@ func (h *DashboardHandler) GetMonthlyStats(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// user.ID is already a UUID
+	userID := user.ID
+
 	// Get monthly loan amounts for the last 12 months
 	loanStatsQuery := `
 		SELECT 
-			TO_CHAR(loan_date, 'YYYY-MM') as month,
+			TO_CHAR(l.created_at, 'YYYY-MM') as month,
 			COUNT(*) as loan_count,
-			SUM(amount) as total_amount
-		FROM loans 
-		WHERE user_id = $1 
-		AND loan_date >= CURRENT_DATE - INTERVAL '12 months'
-		GROUP BY TO_CHAR(loan_date, 'YYYY-MM')
+			SUM(l.amount) as total_amount
+		FROM loans l
+		WHERE l.user_id = $1 AND l.deleted_at IS NULL
+		AND l.created_at >= CURRENT_DATE - INTERVAL '12 months'
+		GROUP BY TO_CHAR(l.created_at, 'YYYY-MM')
 		ORDER BY month DESC`
 
-	rows, err := h.db.Query(loanStatsQuery, user.ID)
+	rows, err := h.db.Query(loanStatsQuery, userID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to retrieve monthly loan statistics")
 		return
@@ -263,12 +277,12 @@ func (h *DashboardHandler) GetMonthlyStats(w http.ResponseWriter, r *http.Reques
 			SUM(t.amount) as total_amount
 		FROM transactions t
 		JOIN loans l ON t.loan_id = l.id
-		WHERE l.user_id = $1 
+		WHERE l.user_id = $1 AND l.deleted_at IS NULL AND t.deleted_at IS NULL
 		AND t.created_at >= CURRENT_DATE - INTERVAL '12 months'
 		GROUP BY TO_CHAR(t.created_at, 'YYYY-MM')
 		ORDER BY month DESC`
 
-	rows2, err := h.db.Query(paymentStatsQuery, user.ID)
+	rows2, err := h.db.Query(paymentStatsQuery, userID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to retrieve monthly payment statistics")
 		return
@@ -308,6 +322,9 @@ func (h *DashboardHandler) GetOverdueLoans(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// user.ID is already a UUID
+	userID := user.ID
+
 	query := `
 		SELECT 
 			l.id, l.borrower_name, l.amount, l.status, 
@@ -316,15 +333,14 @@ func (h *DashboardHandler) GetOverdueLoans(w http.ResponseWriter, r *http.Reques
 			(l.amount - COALESCE(SUM(t.amount), 0)) as remaining_debt,
 			(CURRENT_DATE - l.due_date) as days_overdue
 		FROM loans l
-		LEFT JOIN transactions t ON l.id = t.loan_id
-		WHERE l.user_id = $1 
+		LEFT JOIN transactions t ON l.id = t.loan_id AND t.deleted_at IS NULL
+		WHERE l.user_id = $1 AND l.deleted_at IS NULL
 		AND l.status = 'active'
 		AND l.due_date < CURRENT_DATE
-		AND (l.amount - COALESCE(SUM(t.amount), 0)) > 0
 		GROUP BY l.id, l.borrower_name, l.amount, l.status, l.loan_date, l.due_date, l.created_at, l.updated_at
 		ORDER BY l.due_date ASC`
 
-	rows, err := h.db.Query(query, user.ID)
+	rows, err := h.db.Query(query, userID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to retrieve overdue loans")
 		return
@@ -346,7 +362,7 @@ func (h *DashboardHandler) GetOverdueLoans(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		loan.UserID = user.ID
+		loan.UserID = userID
 
 		overdueLoans = append(overdueLoans, map[string]interface{}{
 			"loan":         loan,
