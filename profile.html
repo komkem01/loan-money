@@ -425,7 +425,7 @@
                         throw new Error('ไม่พบข้อมูลการเข้าสู่ระบบ');
                     }
 
-                    const response = await fetch(`${API_BASE_URL}/profile`, {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/profile`, {
                         method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json',
@@ -455,7 +455,7 @@
                         throw new Error('ไม่พบข้อมูลการเข้าสู่ระบบ');
                     }
 
-                    const response = await fetch(`${API_BASE_URL}/change-password`, {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/change-password`, {
                         method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json',
@@ -485,7 +485,7 @@
                         throw new Error('ไม่พบข้อมูลการเข้าสู่ระบบ');
                     }
 
-                    const response = await fetch(`${API_BASE_URL}/profile`, {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/profile`, {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`

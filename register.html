@@ -99,7 +99,7 @@
 
     <script>
         // Authentication utilities for Loan Money App
-        const API_BASE_URL = 'http://localhost:8080/api/v1';
+        const API_BASE_URL = 'http://localhost:3001/api/v1';
 
         // Token Management
         const AuthManager = {
@@ -315,7 +315,7 @@
 
             // User registration
             async register(userData) {
-                return this.makeRequest('/register', {
+                return this.makeRequest('/api/v1/register', {
                     method: 'POST',
                     body: JSON.stringify(userData)
                 });
@@ -323,7 +323,7 @@
 
             // User login
             async login(credentials) {
-                return this.makeRequest('/login', {
+                return this.makeRequest('/api/v1/login', {
                     method: 'POST',
                     body: JSON.stringify(credentials)
                 });
@@ -331,7 +331,7 @@
 
             // Get user profile
             async getProfile() {
-                return this.makeRequest('/profile', {
+                return this.makeRequest('/api/v1/profile', {
                     method: 'GET'
                 });
             },

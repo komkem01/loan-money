@@ -609,7 +609,7 @@
                     const token = AuthManager.getToken();
                     if (!token) throw new Error('No authentication token');
 
-                    const response = await fetch(`${API_BASE_URL}/profile`, {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/profile`, {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -642,7 +642,7 @@
                         ...filters
                     });
 
-                    const response = await fetch(`${API_BASE_URL}/loans?${params}`, {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/loans?${params}`, {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -666,7 +666,7 @@
                     const token = AuthManager.getToken();
                     if (!token) throw new Error('No authentication token');
 
-                    const response = await fetch(`${API_BASE_URL}/loans`, {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/loans`, {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -692,7 +692,7 @@
                     const token = AuthManager.getToken();
                     if (!token) throw new Error('No authentication token');
 
-                    const response = await fetch(`${API_BASE_URL}/loans/${loanId}`, {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/loans/${loanId}`, {
                         method: 'PATCH',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -718,7 +718,7 @@
                     const token = AuthManager.getToken();
                     if (!token) throw new Error('No authentication token');
 
-                    const response = await fetch(`${API_BASE_URL}/loans/${loanId}`, {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/loans/${loanId}`, {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -743,7 +743,7 @@
                     const token = AuthManager.getToken();
                     if (!token) throw new Error('No authentication token');
 
-                    const response = await fetch(`${API_BASE_URL}/loans/${loanId}/status`, {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/loans/${loanId}/status`, {
                         method: 'PATCH',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -769,7 +769,7 @@
                     const token = AuthManager.getToken();
                     if (!token) throw new Error('No authentication token');
 
-                    const response = await fetch(`${API_BASE_URL}/loans/${loanId}`, {
+                    const response = await fetch(`${API_BASE_URL}/api/v1/loans/${loanId}`, {
                         method: 'DELETE',
                         headers: {
                             'Authorization': `Bearer ${token}`,

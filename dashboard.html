@@ -224,136 +224,137 @@
 
 
     <script>
+        const API_BASE_URL = 'http://localhost:3001/api/v1';
         // Token Management System
         const AuthManager = {
             // Save JWT token to localStorage with timestamp
             saveToken(token) {
-                const tokenData = {
-                    token: token,
-                    timestamp: Date.now(),
-                    expiresIn: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
-                };
-                localStorage.setItem('loan_money_token', JSON.stringify(tokenData));
-                console.log('Token saved with expiry:', new Date(Date.now() + tokenData.expiresIn));
+            const tokenData = {
+                token: token,
+                timestamp: Date.now(),
+                expiresIn: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+            };
+            localStorage.setItem('loan_money_token', JSON.stringify(tokenData));
+            console.log('Token saved with expiry:', new Date(Date.now() + tokenData.expiresIn));
             },
 
             // Get JWT token from localStorage and check if valid
             getToken() {
-                try {
-                    const tokenData = localStorage.getItem('loan_money_token');
-                    if (!tokenData) return null;
-                    
-                    const parsed = JSON.parse(tokenData);
-                    const now = Date.now();
-                    const tokenAge = now - parsed.timestamp;
-                    
-                    // Check if token is expired (24 hours)
-                    if (tokenAge > parsed.expiresIn) {
-                        console.log('Token expired, removing...');
-                        this.removeToken();
-                        this.redirectToLogin();
-                        return null;
-                    }
-                    
-                    return parsed.token;
-                } catch (error) {
-                    console.error('Error parsing token:', error);
-                    this.removeToken();
-                    return null;
+            try {
+                const tokenData = localStorage.getItem('loan_money_token');
+                if (!tokenData) return null;
+                
+                const parsed = JSON.parse(tokenData);
+                const now = Date.now();
+                const tokenAge = now - parsed.timestamp;
+                
+                // Check if token is expired (24 hours)
+                if (tokenAge > parsed.expiresIn) {
+                console.log('Token expired, removing...');
+                this.removeToken();
+                this.redirectToLogin();
+                return null;
                 }
+                
+                return parsed.token;
+            } catch (error) {
+                console.error('Error parsing token:', error);
+                this.removeToken();
+                return null;
+            }
             },
 
             // Remove JWT token and all user data
             removeToken() {
-                localStorage.removeItem('loan_money_token');
-                localStorage.removeItem('loan_money_user');
-                console.log('All tokens and user data cleared');
+            localStorage.removeItem('loan_money_token');
+            localStorage.removeItem('loan_money_user');
+            console.log('All tokens and user data cleared');
             },
 
             // Save user information
             saveUser(user) {
-                localStorage.setItem('loan_money_user', JSON.stringify(user));
+            localStorage.setItem('loan_money_user', JSON.stringify(user));
             },
 
             // Get user information
             getUser() {
-                try {
-                    const user = localStorage.getItem('loan_money_user');
-                    return user ? JSON.parse(user) : null;
-                } catch (error) {
-                    console.error('Error parsing user data:', error);
-                    return null;
-                }
+            try {
+                const user = localStorage.getItem('loan_money_user');
+                return user ? JSON.parse(user) : null;
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                return null;
+            }
             },
 
             // Check if user is authenticated with valid token
             isAuthenticated() {
-                const token = this.getToken();
-                const user = this.getUser();
-                return !!(token && user);
+            const token = this.getToken();
+            const user = this.getUser();
+            return !!(token && user);
             },
 
             // Redirect to login if not authenticated
             requireAuth() {
-                if (!this.isAuthenticated()) {
-                    this.redirectToLogin();
-                    return false;
-                }
-                return true;
+            if (!this.isAuthenticated()) {
+                this.redirectToLogin();
+                return false;
+            }
+            return true;
             },
 
             // Redirect to login page
             redirectToLogin() {
-                window.location.href = '/index.html';
+            window.location.href = '/index.html';
             },
 
             // Complete logout - clear all data and redirect
             logout() {
-                this.removeToken();
-                this.redirectToLogin();
+            this.removeToken();
+            this.redirectToLogin();
             },
 
             // Get authorization headers for API calls
             getAuthHeaders() {
-                const token = this.getToken();
-                return token ? { 'Authorization': `Bearer ${token}` } : {};
+            const token = this.getToken();
+            return token ? { 'Authorization': `Bearer ${token}` } : {};
             },
 
             // Check token expiry and auto-logout if needed
             checkTokenExpiry() {
-                const tokenData = localStorage.getItem('loan_money_token');
-                if (tokenData) {
-                    try {
-                        const parsed = JSON.parse(tokenData);
-                        const now = Date.now();
-                        const tokenAge = now - parsed.timestamp;
-                        
-                        // If token expires in less than 1 hour, show warning
-                        const oneHour = 60 * 60 * 1000;
-                        if (tokenAge > (parsed.expiresIn - oneHour)) {
-                            console.warn('Token expires soon');
-                        }
-                        
-                        // If expired, show message first then logout
-                        if (tokenAge > parsed.expiresIn) {
-                            console.log('Token expired, logging out...');
-                            
-                            // Show expiry message before redirect
-                            if (typeof showMessage === 'function') {
-                                showMessage('⏰ เซสชันหมดอายุแล้ว กำลังนำท่านกลับสู่หน้าเข้าสู่ระบบ...', true);
-                            }
-                            
-                            // Delay logout to let user see the message
-                            setTimeout(() => {
-                                this.removeToken();
-                                this.redirectToLogin();
-                            }, 30000);
-                        }
-                    } catch (error) {
-                        console.error('Error checking token expiry:', error);
-                        this.removeToken();
-                    }
+            const tokenData = localStorage.getItem('loan_money_token');
+            if (tokenData) {
+                try {
+                const parsed = JSON.parse(tokenData);
+                const now = Date.now();
+                const tokenAge = now - parsed.timestamp;
+                
+                // If token expires in less than 1 hour, show warning
+                const oneHour = 60 * 60 * 1000;
+                if (tokenAge > (parsed.expiresIn - oneHour)) {
+                    console.warn('Token expires soon');
                 }
+                
+                // If expired, show message first then logout
+                if (tokenAge > parsed.expiresIn) {
+                    console.log('Token expired, logging out...');
+                    
+                    // Show expiry message before redirect
+                    if (typeof showMessage === 'function') {
+                    showMessage('⏰ เซสชันหมดอายุแล้ว กำลังนำท่านกลับสู่หน้าเข้าสู่ระบบ...', true);
+                    }
+                    
+                    // Delay logout to let user see the message
+                    setTimeout(() => {
+                    this.removeToken();
+                    this.redirectToLogin();
+                    }, 30000);
+                }
+                } catch (error) {
+                console.error('Error checking token expiry:', error);
+                this.removeToken();
+                }
+            }
             }
         };
 
@@ -362,10 +363,10 @@
             // Create a message element if it doesn't exist
             let messageDiv = document.getElementById('dashboardMessage');
             if (!messageDiv) {
-                messageDiv = document.createElement('div');
-                messageDiv.id = 'dashboardMessage';
-                messageDiv.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md transition-all duration-300';
-                document.body.appendChild(messageDiv);
+            messageDiv = document.createElement('div');
+            messageDiv.id = 'dashboardMessage';
+            messageDiv.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md transition-all duration-300';
+            document.body.appendChild(messageDiv);
             }
             
             // Add loading spinner for non-error messages
@@ -374,27 +375,27 @@
             
             messageDiv.innerHTML = spinnerHtml + message;
             messageDiv.className = isError 
-                ? 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md bg-red-100 border border-red-300 text-red-700 transition-all duration-300'
-                : 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md bg-emerald-100 border border-emerald-300 text-emerald-700 transition-all duration-300';
+            ? 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md bg-red-100 border border-red-300 text-red-700 transition-all duration-300'
+            : 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md bg-emerald-100 border border-emerald-300 text-emerald-700 transition-all duration-300';
             
             messageDiv.style.display = 'block';
             messageDiv.style.opacity = '1';
             
             // Clear any existing timeout
             if (window.messageTimeout) {
-                clearTimeout(window.messageTimeout);
+            clearTimeout(window.messageTimeout);
             }
             
             // Hide message after specified time (or don't auto-hide loading messages)
             if (autoHide && !hasSpinner) {
-                window.messageTimeout = setTimeout(() => {
-                    messageDiv.style.opacity = '0';
-                    setTimeout(() => {
-                        if (messageDiv.style.opacity === '0') {
-                            messageDiv.style.display = 'none';
-                        }
-                    }, 300);
-                }, isError ? 5000 : 3000); // Show errors longer
+            window.messageTimeout = setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                if (messageDiv.style.opacity === '0') {
+                    messageDiv.style.display = 'none';
+                }
+                }, 300);
+            }, isError ? 5000 : 3000); // Show errors longer
             }
         }
 
@@ -402,13 +403,13 @@
         function hideMessage() {
             const messageDiv = document.getElementById('dashboardMessage');
             if (messageDiv) {
-                messageDiv.style.opacity = '0';
-                setTimeout(() => {
-                    messageDiv.style.display = 'none';
-                }, 300);
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 300);
             }
             if (window.messageTimeout) {
-                clearTimeout(window.messageTimeout);
+            clearTimeout(window.messageTimeout);
             }
         }
 
@@ -437,69 +438,65 @@
         });
 
         // --- API Functions ---
-        const API = {
-            BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-                ? 'http://localhost:8080/api/v1'  // Development mode 
-                : '/api/v1', // Production mode
-            
+        const API = {            
             async request(endpoint, options = {}) {
-                const url = `${this.BASE_URL}${endpoint}`;
-                const headers = {
-                    'Content-Type': 'application/json',
-                    ...AuthManager.getAuthHeaders(),
-                    ...options.headers
-                };
+            const url = `${API_BASE_URL}${endpoint}`;
+            const headers = {
+                'Content-Type': 'application/json',
+                ...AuthManager.getAuthHeaders(),
+                ...options.headers
+            };
+            
+            try {
+                const response = await fetch(url, {
+                ...options,
+                headers
+                });
                 
-                try {
-                    const response = await fetch(url, {
-                        ...options,
-                        headers
-                    });
-                    
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ error: 'Network error' }));
-                        throw new Error(errorData.error || `HTTP ${response.status}`);
-                    }
-                    
-                    return await response.json();
-                } catch (error) {
-                    console.error(`API request failed for ${endpoint}:`, error);
-                    showMessage(error.message || 'API request failed', true);
-                    throw error;
+                if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+                throw new Error(errorData.error || `HTTP ${response.status}`);
                 }
+                
+                return await response.json();
+            } catch (error) {
+                console.error(`API request failed for ${endpoint}:`, error);
+                showMessage(error.message || 'API request failed', true);
+                throw error;
+            }
             },
             
             // Dashboard API calls
             getDashboardStats() {
-                return this.request('/dashboard/stats');
+            return this.request('/dashboard/stats');
             },
             
             getLoans(page = 1, limit = 10) {
-                return this.request(`/loans?page=${page}&limit=${limit}`);
+            return this.request(`/loans?page=${page}&limit=${limit}`);
             },
             
             getRecentTransactions(limit = 5) {
-                return this.request(`/dashboard/recent-transactions?limit=${limit}`);
+            return this.request(`/dashboard/recent-transactions?limit=${limit}`);
             },
             
             getLoanSummary(limit = 10, status = '') {
-                const statusParam = status ? `&status=${status}` : '';
-                return this.request(`/dashboard/loan-summary?limit=${limit}${statusParam}`);
+            const statusParam = status ? `&status=${status}` : '';
+            return this.request(`/dashboard/loan-summary?limit=${limit}${statusParam}`);
             },
             
             getMonthlyStats() {
-                return this.request('/dashboard/monthly-stats');
+            return this.request('/dashboard/monthly-stats');
             },
             
             getOverdueLoans() {
-                return this.request('/dashboard/overdue-loans');
+            return this.request('/dashboard/overdue-loans');
             },
             
             createLoan(loanData) {
-                return this.request('/loans', {
-                    method: 'POST',
-                    body: JSON.stringify(loanData)
-                });
+            return this.request('/loans', {
+                method: 'POST',
+                body: JSON.stringify(loanData)
+            });
             }
         };
 
@@ -520,10 +517,10 @@
         const closeModal = () => {
             loanModal.querySelector('.modal').classList.add('scale-95');
             setTimeout(() => {
-                loanModal.classList.add('hidden');
-                loanModal.classList.remove('flex');
-                loanForm.reset();
-                document.getElementById('loanId').value = '';
+            loanModal.classList.add('hidden');
+            loanModal.classList.remove('flex');
+            loanForm.reset();
+            document.getElementById('loanId').value = '';
             }, 300);
         };
 
@@ -567,8 +564,8 @@
             const nextBtn = document.getElementById('dashboardNextBtn');
 
             if (totalPages <= 1) {
-                paginationContainer.classList.add('hidden');
-                return;
+            paginationContainer.classList.add('hidden');
+            return;
             }
 
             paginationContainer.classList.remove('hidden');
@@ -584,19 +581,19 @@
             let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
             if (endPage - startPage + 1 < maxVisiblePages) {
-                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
             }
 
             for (let i = startPage; i <= endPage; i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.className = `px-3 py-2 text-sm border rounded-lg ${
-                    i === dashboardCurrentPage 
-                        ? 'bg-emerald-500 text-white border-emerald-500' 
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`;
-                pageBtn.textContent = i;
-                pageBtn.addEventListener('click', () => goToDashboardPage(i));
-                pageNumbers.appendChild(pageBtn);
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `px-3 py-2 text-sm border rounded-lg ${
+                i === dashboardCurrentPage 
+                ? 'bg-emerald-500 text-white border-emerald-500' 
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`;
+            pageBtn.textContent = i;
+            pageBtn.addEventListener('click', () => goToDashboardPage(i));
+            pageNumbers.appendChild(pageBtn);
             }
 
             updateDashboardPaginationInfo();
@@ -618,50 +615,50 @@
 
         const renderLoans = (loans) => {
             if (!loans || loans.length === 0) {
-                loanListContainer.innerHTML = `<p class="text-gray-500 text-center py-8">No loans found. Add one to get started!</p>`;
-                document.getElementById('dashboardPaginationContainer').classList.add('hidden');
-                return;
+            loanListContainer.innerHTML = `<p class="text-gray-500 text-center py-8">No loans found. Add one to get started!</p>`;
+            document.getElementById('dashboardPaginationContainer').classList.add('hidden');
+            return;
             }
             
             loanListContainer.innerHTML = loans.map(loan => {
-                const totalPaid = loan.total_paid || 0;
-                const remaining = loan.amount - totalPaid;
-                const progress = loan.amount > 0 ? (totalPaid / loan.amount) * 100 : 0;
+            const totalPaid = loan.total_paid || 0;
+            const remaining = loan.amount - totalPaid;
+            const progress = loan.amount > 0 ? (totalPaid / loan.amount) * 100 : 0;
 
-                let statusBadge;
-                if (loan.status === 'completed' || loan.status === 'paid') {
-                    statusBadge = `<span class="px-2 py-1 text-xs font-bold text-green-800 bg-green-200 rounded-full">Paid</span>`;
-                } else if (loan.status === 'overdue') {
-                    statusBadge = `<span class="px-2 py-1 text-xs font-bold text-red-800 bg-red-200 rounded-full">Overdue</span>`;
-                } else {
-                    statusBadge = `<span class="px-2 py-1 text-xs font-bold text-sky-800 bg-sky-200 rounded-full">Active</span>`;
-                }
+            let statusBadge;
+            if (loan.status === 'completed' || loan.status === 'paid') {
+                statusBadge = `<span class="px-2 py-1 text-xs font-bold text-green-800 bg-green-200 rounded-full">Paid</span>`;
+            } else if (loan.status === 'overdue') {
+                statusBadge = `<span class="px-2 py-1 text-xs font-bold text-red-800 bg-red-200 rounded-full">Overdue</span>`;
+            } else {
+                statusBadge = `<span class="px-2 py-1 text-xs font-bold text-sky-800 bg-sky-200 rounded-full">Active</span>`;
+            }
 
-                return `
-                <div class="border rounded-xl p-4 grid grid-cols-2 sm:grid-cols-5 items-center gap-4 hover:bg-gray-50 transition">
-                    <div class="sm:col-span-1 font-bold text-gray-800">
-                        <p>${loan.borrower_name}</p>
-                        <div class="sm:hidden text-sm font-normal text-gray-500">${statusBadge}</div>
-                    </div>
-                    <div class="col-span-2 sm:col-span-2">
-                        <div class="w-full bg-gray-200 rounded-full h-2.5">
-                            <div class="bg-emerald-500 h-2.5 rounded-full" style="width: ${progress}%"></div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">
-                            Paid ฿${totalPaid.toLocaleString()} of ฿${loan.amount.toLocaleString()}
-                        </p>
-                    </div>
-                    <div class="hidden sm:block text-center">${statusBadge}</div>
-                    <div class="col-span-2 sm:col-span-1 flex items-center justify-end space-x-2">
-                        <button class="text-gray-400 hover:text-emerald-500 p-2 rounded-full hover:bg-emerald-100 transition" title="Add Payment">
-                            <i class="ph ph-receipt text-xl"></i>
-                        </button>
-                        <button class="text-gray-400 hover:text-blue-500 p-2 rounded-full hover:bg-blue-100 transition" title="View Details">
-                            <i class="ph ph-info text-xl"></i>
-                        </button>
-                    </div>
+            return `
+            <div class="border rounded-xl p-4 grid grid-cols-2 sm:grid-cols-5 items-center gap-4 hover:bg-gray-50 transition">
+                <div class="sm:col-span-1 font-bold text-gray-800">
+                <p>${loan.borrower_name}</p>
+                <div class="sm:hidden text-sm font-normal text-gray-500">${statusBadge}</div>
                 </div>
-                `;
+                <div class="col-span-2 sm:col-span-2">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-emerald-500 h-2.5 rounded-full" style="width: ${progress}%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">
+                    Paid ฿${totalPaid.toLocaleString()} of ฿${loan.amount.toLocaleString()}
+                </p>
+                </div>
+                <div class="hidden sm:block text-center">${statusBadge}</div>
+                <div class="col-span-2 sm:col-span-1 flex items-center justify-end space-x-2">
+                <button class="text-gray-400 hover:text-emerald-500 p-2 rounded-full hover:bg-emerald-100 transition" title="Add Payment">
+                    <i class="ph ph-receipt text-xl"></i>
+                </button>
+                <button class="text-gray-400 hover:text-blue-500 p-2 rounded-full hover:bg-blue-100 transition" title="View Details">
+                    <i class="ph ph-info text-xl"></i>
+                </button>
+                </div>
+            </div>
+            `;
             }).join('');
         };
         
@@ -674,176 +671,176 @@
 
         const updateSummary = (stats) => {
             if (stats) {
-                // Use API stats if available
-                document.getElementById('totalOwed').textContent = `฿${(stats.total_debt_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                document.getElementById('activeLoans').textContent = stats.active_loans || 0;
-                document.getElementById('overdueLoans').textContent = stats.overdue_loans || 0;
-                document.getElementById('paidLoans').textContent = stats.completed_loans || 0;
+            // Use API stats if available
+            document.getElementById('totalOwed').textContent = `฿${(stats.total_debt_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('activeLoans').textContent = stats.active_loans || 0;
+            document.getElementById('overdueLoans').textContent = stats.overdue_loans || 0;
+            document.getElementById('paidLoans').textContent = stats.completed_loans || 0;
             } else if (allLoans && allLoans.length >= 0) {
-                // Fallback calculation from loans data
-                const totalOwed = allLoans.filter(l => l.status !== 'completed').reduce((sum, l) => {
-                    const totalPaid = l.total_paid || 0;
-                    return sum + (l.amount - totalPaid);
-                }, 0);
-                const activeLoans = allLoans.filter(l => l.status === 'active').length;
-                const overdueLoans = allLoans.filter(l => l.status === 'overdue').length;
-                const paidLoans = allLoans.filter(l => l.status === 'completed').length;
-                
-                document.getElementById('totalOwed').textContent = `฿${totalOwed.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                document.getElementById('activeLoans').textContent = activeLoans;
-                document.getElementById('overdueLoans').textContent = overdueLoans;
-                document.getElementById('paidLoans').textContent = paidLoans;
+            // Fallback calculation from loans data
+            const totalOwed = allLoans.filter(l => l.status !== 'completed').reduce((sum, l) => {
+                const totalPaid = l.total_paid || 0;
+                return sum + (l.amount - totalPaid);
+            }, 0);
+            const activeLoans = allLoans.filter(l => l.status === 'active').length;
+            const overdueLoans = allLoans.filter(l => l.status === 'overdue').length;
+            const paidLoans = allLoans.filter(l => l.status === 'completed').length;
+            
+            document.getElementById('totalOwed').textContent = `฿${totalOwed.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('activeLoans').textContent = activeLoans;
+            document.getElementById('overdueLoans').textContent = overdueLoans;
+            document.getElementById('paidLoans').textContent = paidLoans;
             } else {
-                // Show default values when no data available
-                document.getElementById('totalOwed').textContent = '฿0.00';
-                document.getElementById('activeLoans').textContent = '0';
-                document.getElementById('overdueLoans').textContent = '0';
-                document.getElementById('paidLoans').textContent = '0';
+            // Show default values when no data available
+            document.getElementById('totalOwed').textContent = '฿0.00';
+            document.getElementById('activeLoans').textContent = '0';
+            document.getElementById('overdueLoans').textContent = '0';
+            document.getElementById('paidLoans').textContent = '0';
             }
         }
 
         // Load dashboard data from API
         const loadDashboardData = async () => {
             try {
-                showMessage('Loading dashboard data...', false, false); // Don't auto-hide loading message
-                
-                // Show loading skeletons
-                showLoadingSummary();
-                
-                // Initialize loading states
-                let loadingCount = 0;
-                let totalLoadingTasks = 4;
-                const updateLoadingProgress = () => {
-                    loadingCount++;
-                    const progress = Math.round((loadingCount / totalLoadingTasks) * 100);
-                    showMessage(`Loading dashboard data... (${progress}%)`, false, false);
-                };
+            showMessage('Loading dashboard data...', false, false); // Don't auto-hide loading message
+            
+            // Show loading skeletons
+            showLoadingSummary();
+            
+            // Initialize loading states
+            let loadingCount = 0;
+            let totalLoadingTasks = 4;
+            const updateLoadingProgress = () => {
+                loadingCount++;
+                const progress = Math.round((loadingCount / totalLoadingTasks) * 100);
+                showMessage(`Loading dashboard data... (${progress}%)`, false, false);
+            };
 
-                // Load critical data first (stats and loans) sequentially to ensure they load properly
-                let statsResponse = null;
-                let loanSummaryResponse = { loans: [] };
-                
-                try {
-                    statsResponse = await API.getDashboardStats();
-                    updateLoadingProgress();
-                    console.log('✓ Dashboard stats loaded successfully');
-                } catch (err) {
-                    console.warn('⚠ Failed to load dashboard stats:', err);
-                    updateLoadingProgress();
-                }
-                
-                try {
-                    loanSummaryResponse = await API.getLoanSummary(50);
-                    updateLoadingProgress();
-                    console.log('✓ Loan summary loaded successfully:', loanSummaryResponse.loans?.length || 0, 'loans');
-                } catch (err) {
-                    console.warn('⚠ Failed to load loan summary:', err);
-                    loanSummaryResponse = { loans: [] };
-                    updateLoadingProgress();
-                }
+            // Load critical data first (stats and loans) sequentially to ensure they load properly
+            let statsResponse = null;
+            let loanSummaryResponse = { loans: [] };
+            
+            try {
+                statsResponse = await API.getDashboardStats();
+                updateLoadingProgress();
+                console.log('✓ Dashboard stats loaded successfully');
+            } catch (err) {
+                console.warn('⚠ Failed to load dashboard stats:', err);
+                updateLoadingProgress();
+            }
+            
+            try {
+                loanSummaryResponse = await API.getLoanSummary(50);
+                updateLoadingProgress();
+                console.log('✓ Loan summary loaded successfully:', loanSummaryResponse.loans?.length || 0, 'loans');
+            } catch (err) {
+                console.warn('⚠ Failed to load loan summary:', err);
+                loanSummaryResponse = { loans: [] };
+                updateLoadingProgress();
+            }
 
-                // Load additional data in parallel (non-critical for basic functionality)
-                const additionalDataPromises = [
-                    API.getRecentTransactions(10).then(result => {
-                        console.log('✓ Recent transactions loaded successfully');
-                        return result;
-                    }).catch(err => {
-                        console.warn('⚠ Failed to load recent transactions:', err);
-                        return { transactions: [] };
-                    }),
-                    API.getOverdueLoans().then(result => {
-                        console.log('✓ Overdue loans loaded successfully');
-                        return result;
-                    }).catch(err => {
-                        console.warn('⚠ Failed to load overdue loans:', err);
-                        return { overdue_loans: [] };
-                    })
-                ];
+            // Load additional data in parallel (non-critical for basic functionality)
+            const additionalDataPromises = [
+                API.getRecentTransactions(10).then(result => {
+                console.log('✓ Recent transactions loaded successfully');
+                return result;
+                }).catch(err => {
+                console.warn('⚠ Failed to load recent transactions:', err);
+                return { transactions: [] };
+                }),
+                API.getOverdueLoans().then(result => {
+                console.log('✓ Overdue loans loaded successfully');
+                return result;
+                }).catch(err => {
+                console.warn('⚠ Failed to load overdue loans:', err);
+                return { overdue_loans: [] };
+                })
+            ];
 
-                const [recentTransactionsResponse, overdueLoansResponse] = await Promise.allSettled(additionalDataPromises);
+            const [recentTransactionsResponse, overdueLoansResponse] = await Promise.allSettled(additionalDataPromises);
+            
+            // Extract results from Promise.allSettled
+            const recentTransactions = recentTransactionsResponse.status === 'fulfilled' 
+                ? recentTransactionsResponse.value 
+                : { transactions: [] };
+            const overdueLoans = overdueLoansResponse.status === 'fulfilled' 
+                ? overdueLoansResponse.value 
+                : { overdue_loans: [] };
+            
+            updateLoadingProgress(); // For recent transactions
+            updateLoadingProgress(); // For overdue loans
+            
+            // Update global variables - ensure loans data is available
+            dashboardStats = statsResponse;
+            allLoans = loanSummaryResponse.loans || [];
+            dashboardFilteredLoans = [...allLoans];
+            
+            // Store additional data for potential future use
+            window.dashboardData = {
+                stats: statsResponse,
+                loans: allLoans,
+                recentTransactions: recentTransactions.transactions || [],
+                overdueLoans: overdueLoans.overdue_loans || []
+            };
+            
+            // Always update UI regardless of some API failures
+            updateSummary(dashboardStats);
+            dashboardCurrentPage = 1;
+            renderDashboardCurrentPage();
+            
+            // Update user display
+            const user = AuthManager.getUser();
+            if (user) {
+                const fullName = user.full_name || user.username || 'User';
+                const username = user.username || 'username';
                 
-                // Extract results from Promise.allSettled
-                const recentTransactions = recentTransactionsResponse.status === 'fulfilled' 
-                    ? recentTransactionsResponse.value 
-                    : { transactions: [] };
-                const overdueLoans = overdueLoansResponse.status === 'fulfilled' 
-                    ? overdueLoansResponse.value 
-                    : { overdue_loans: [] };
-                
-                updateLoadingProgress(); // For recent transactions
-                updateLoadingProgress(); // For overdue loans
-                
-                // Update global variables - ensure loans data is available
-                dashboardStats = statsResponse;
-                allLoans = loanSummaryResponse.loans || [];
-                dashboardFilteredLoans = [...allLoans];
-                
-                // Store additional data for potential future use
-                window.dashboardData = {
-                    stats: statsResponse,
-                    loans: allLoans,
-                    recentTransactions: recentTransactions.transactions || [],
-                    overdueLoans: overdueLoans.overdue_loans || []
-                };
-                
-                // Always update UI regardless of some API failures
-                updateSummary(dashboardStats);
-                dashboardCurrentPage = 1;
-                renderDashboardCurrentPage();
-                
-                // Update user display
-                const user = AuthManager.getUser();
-                if (user) {
-                    const fullName = user.full_name || user.username || 'User';
-                    const username = user.username || 'username';
-                    
-                    // Update user info in header
-                    if (document.getElementById('userFullName')) {
-                        document.getElementById('userFullName').textContent = fullName;
-                    }
-                    if (document.getElementById('userUsername')) {
-                        document.getElementById('userUsername').textContent = `@${username}`;
-                    }
-                    if (document.getElementById('userAvatar')) {
-                        document.getElementById('userAvatar').textContent = fullName.charAt(0).toUpperCase();
-                    }
+                // Update user info in header
+                if (document.getElementById('userFullName')) {
+                document.getElementById('userFullName').textContent = fullName;
                 }
-                
-                // Log loaded data for debugging
-                console.log('Dashboard data loaded:', {
-                    stats: dashboardStats,
-                    loansCount: allLoans.length,
-                    transactionsCount: window.dashboardData.recentTransactions.length,
-                    overdueLoansCount: window.dashboardData.overdueLoans.length,
-                    loadingSuccess: {
-                        stats: !!statsResponse,
-                        loans: !!(loanSummaryResponse.loans && loanSummaryResponse.loans.length >= 0),
-                        transactions: !!(recentTransactions.transactions),
-                        overdue: !!(overdueLoans.overdue_loans)
-                    }
-                });
-                
-                hideMessage(); // Hide loading message
-                showMessage('Dashboard loaded successfully!', false);
-                
+                if (document.getElementById('userUsername')) {
+                document.getElementById('userUsername').textContent = `@${username}`;
+                }
+                if (document.getElementById('userAvatar')) {
+                document.getElementById('userAvatar').textContent = fullName.charAt(0).toUpperCase();
+                }
+            }
+            
+            // Log loaded data for debugging
+            console.log('Dashboard data loaded:', {
+                stats: dashboardStats,
+                loansCount: allLoans.length,
+                transactionsCount: window.dashboardData.recentTransactions.length,
+                overdueLoansCount: window.dashboardData.overdueLoans.length,
+                loadingSuccess: {
+                stats: !!statsResponse,
+                loans: !!(loanSummaryResponse.loans && loanSummaryResponse.loans.length >= 0),
+                transactions: !!(recentTransactions.transactions),
+                overdue: !!(overdueLoans.overdue_loans)
+                }
+            });
+            
+            hideMessage(); // Hide loading message
+            showMessage('Dashboard loaded successfully!', false);
+            
             } catch (error) {
-                console.error('Critical error loading dashboard data:', error);
-                hideMessage(); // Hide loading message
-                showMessage('Failed to load dashboard data. Please refresh the page.', true);
-                
-                // Show empty state with error message
-                dashboardStats = null;
-                allLoans = [];
-                dashboardFilteredLoans = [];
-                renderDashboardCurrentPage();
-                updateSummary(null);
-                
-                // Show retry button
-                setTimeout(() => {
-                    if (confirm('Dashboard failed to load. Would you like to try again?')) {
-                        loadDashboardData();
-                    }
-                }, 2000);
+            console.error('Critical error loading dashboard data:', error);
+            hideMessage(); // Hide loading message
+            showMessage('Failed to load dashboard data. Please refresh the page.', true);
+            
+            // Show empty state with error message
+            dashboardStats = null;
+            allLoans = [];
+            dashboardFilteredLoans = [];
+            renderDashboardCurrentPage();
+            updateSummary(null);
+            
+            // Show retry button
+            setTimeout(() => {
+                if (confirm('Dashboard failed to load. Would you like to try again?')) {
+                loadDashboardData();
+                }
+            }, 2000);
             }
         };
 
@@ -853,16 +850,16 @@
 
             // Add event listeners for dashboard pagination buttons
             document.getElementById('dashboardPrevBtn').addEventListener('click', () => {
-                if (dashboardCurrentPage > 1) {
-                    goToDashboardPage(dashboardCurrentPage - 1);
-                }
+            if (dashboardCurrentPage > 1) {
+                goToDashboardPage(dashboardCurrentPage - 1);
+            }
             });
 
             document.getElementById('dashboardNextBtn').addEventListener('click', () => {
-                const totalPages = Math.ceil(dashboardFilteredLoans.length / dashboardItemsPerPage);
-                if (dashboardCurrentPage < totalPages) {
-                    goToDashboardPage(dashboardCurrentPage + 1);
-                }
+            const totalPages = Math.ceil(dashboardFilteredLoans.length / dashboardItemsPerPage);
+            if (dashboardCurrentPage < totalPages) {
+                goToDashboardPage(dashboardCurrentPage + 1);
+            }
             });
         });
 
@@ -870,41 +867,41 @@
             e.preventDefault();
             
             const loanData = {
-                borrower_name: document.getElementById('borrowerName').value.trim(),
-                amount: parseFloat(document.getElementById('amount').value),
-                loan_date: document.getElementById('loanDate').value,
-                due_date: document.getElementById('dueDate').value || null,
+            borrower_name: document.getElementById('borrowerName').value.trim(),
+            amount: parseFloat(document.getElementById('amount').value),
+            loan_date: document.getElementById('loanDate').value,
+            due_date: document.getElementById('dueDate').value || null,
             };
             
             // Validation
             if (!loanData.borrower_name) {
-                showMessage('Please enter borrower name', true);
-                return;
+            showMessage('Please enter borrower name', true);
+            return;
             }
             
             if (!loanData.amount || loanData.amount <= 0) {
-                showMessage('Please enter a valid amount', true);
-                return;
+            showMessage('Please enter a valid amount', true);
+            return;
             }
             
             if (!loanData.loan_date) {
-                showMessage('Please select loan date', true);
-                return;
+            showMessage('Please select loan date', true);
+            return;
             }
             
             try {
-                showMessage('Creating loan...', false);
-                const newLoan = await API.createLoan(loanData);
-                
-                showMessage('Loan created successfully!', false);
-                closeModal();
-                
-                // Reload dashboard data to show the new loan
-                await loadDashboardData();
-                
+            showMessage('Creating loan...', false);
+            const newLoan = await API.createLoan(loanData);
+            
+            showMessage('Loan created successfully!', false);
+            closeModal();
+            
+            // Reload dashboard data to show the new loan
+            await loadDashboardData();
+            
             } catch (error) {
-                console.error('Failed to create loan:', error);
-                showMessage('Failed to create loan. Please try again.', true);
+            console.error('Failed to create loan:', error);
+            showMessage('Failed to create loan. Please try again.', true);
             }
         });
         
@@ -913,7 +910,7 @@
             AuthManager.logout();
         });
 
-    </script>
+        </script>
 </body>
 </html>
 
