@@ -15,8 +15,10 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
+  origin: true, // Allow all origins including file://
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -39,40 +41,40 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Auth routes (public)
+// Auth routes (public) - NO AUTH REQUIRED
 app.post('/api/v1/register', authHandler.register.bind(authHandler));
 app.post('/api/v1/login', authHandler.login.bind(authHandler));
 
-// Protected routes (authentication required)
-app.use('/api/v1', authMiddleware);
+// Apply auth middleware only to protected routes
+// Don't use app.use('/api/v1', authMiddleware) as it affects register/login too
 
-// Profile management endpoints
-app.get('/api/v1/profile', profileHandler.getProfile.bind(profileHandler));
-app.patch('/api/v1/profile', profileHandler.updateProfile.bind(profileHandler));
-app.patch('/api/v1/change-password', profileHandler.changePassword.bind(profileHandler));
+// Profile management endpoints (protected)
+app.get('/api/v1/profile', authMiddleware, profileHandler.getProfile.bind(profileHandler));
+app.patch('/api/v1/profile', authMiddleware, profileHandler.updateProfile.bind(profileHandler));
+app.patch('/api/v1/change-password', authMiddleware, profileHandler.changePassword.bind(profileHandler));
 
-// Dashboard endpoints
-app.get('/api/v1/dashboard/stats', dashboardHandler.getDashboardStats.bind(dashboardHandler));
-app.get('/api/v1/dashboard/recent-transactions', dashboardHandler.getRecentTransactions.bind(dashboardHandler));
-app.get('/api/v1/dashboard/loan-summary', dashboardHandler.getLoanSummary.bind(dashboardHandler));
-app.get('/api/v1/dashboard/monthly-stats', dashboardHandler.getMonthlyStats.bind(dashboardHandler));
-app.get('/api/v1/dashboard/overdue-loans', dashboardHandler.getOverdueLoans.bind(dashboardHandler));
+// Dashboard endpoints (protected)
+app.get('/api/v1/dashboard/stats', authMiddleware, dashboardHandler.getDashboardStats.bind(dashboardHandler));
+app.get('/api/v1/dashboard/recent-transactions', authMiddleware, dashboardHandler.getRecentTransactions.bind(dashboardHandler));
+app.get('/api/v1/dashboard/loan-summary', authMiddleware, dashboardHandler.getLoanSummary.bind(dashboardHandler));
+app.get('/api/v1/dashboard/monthly-stats', authMiddleware, dashboardHandler.getMonthlyStats.bind(dashboardHandler));
+app.get('/api/v1/dashboard/overdue-loans', authMiddleware, dashboardHandler.getOverdueLoans.bind(dashboardHandler));
 
-// Loan management endpoints
-app.get('/api/v1/loans', loanHandler.getLoans.bind(loanHandler));
-app.post('/api/v1/loans', loanHandler.createLoan.bind(loanHandler));
-app.get('/api/v1/loans/:id', loanHandler.getLoan.bind(loanHandler));
-app.patch('/api/v1/loans/:id', loanHandler.updateLoan.bind(loanHandler));
-app.delete('/api/v1/loans/:id', loanHandler.deleteLoan.bind(loanHandler));
-app.patch('/api/v1/loans/:id/status', loanHandler.updateLoanStatus.bind(loanHandler));
+// Loan management endpoints (protected)
+app.get('/api/v1/loans', authMiddleware, loanHandler.getLoans.bind(loanHandler));
+app.post('/api/v1/loans', authMiddleware, loanHandler.createLoan.bind(loanHandler));
+app.get('/api/v1/loans/:id', authMiddleware, loanHandler.getLoan.bind(loanHandler));
+app.patch('/api/v1/loans/:id', authMiddleware, loanHandler.updateLoan.bind(loanHandler));
+app.delete('/api/v1/loans/:id', authMiddleware, loanHandler.deleteLoan.bind(loanHandler));
+app.patch('/api/v1/loans/:id/status', authMiddleware, loanHandler.updateLoanStatus.bind(loanHandler));
 
-// Transaction management endpoints
-app.get('/api/v1/transactions', transactionHandler.getTransactions.bind(transactionHandler));
-app.post('/api/v1/transactions', transactionHandler.createTransaction.bind(transactionHandler));
-app.get('/api/v1/transactions/:id', transactionHandler.getTransaction.bind(transactionHandler));
-app.patch('/api/v1/transactions/:id', transactionHandler.updateTransaction.bind(transactionHandler));
-app.delete('/api/v1/transactions/:id', transactionHandler.deleteTransaction.bind(transactionHandler));
-app.get('/api/v1/loans/:loanId/transactions', transactionHandler.getTransactionsByLoan.bind(transactionHandler));
+// Transaction management endpoints (protected)
+app.get('/api/v1/transactions', authMiddleware, transactionHandler.getTransactions.bind(transactionHandler));
+app.post('/api/v1/transactions', authMiddleware, transactionHandler.createTransaction.bind(transactionHandler));
+app.get('/api/v1/transactions/:id', authMiddleware, transactionHandler.getTransaction.bind(transactionHandler));
+app.patch('/api/v1/transactions/:id', authMiddleware, transactionHandler.updateTransaction.bind(transactionHandler));
+app.delete('/api/v1/transactions/:id', authMiddleware, transactionHandler.deleteTransaction.bind(transactionHandler));
+app.get('/api/v1/loans/:loanId/transactions', authMiddleware, transactionHandler.getTransactionsByLoan.bind(transactionHandler));
 
 // Error handling middleware
 app.use((error, req, res, next) => {

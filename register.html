@@ -99,7 +99,7 @@
 
     <script>
         // Authentication utilities for Loan Money App
-        const API_BASE_URL = 'http://localhost:3001/api/v1';
+        const API_BASE_URL = 'http://localhost:3001';
 
         // Token Management
         const AuthManager = {
@@ -197,16 +197,7 @@
                 window.location.href = '/index.html';
             },
 
-            // Redirect to dashboard if already authenticated (but delay check)  
-            redirectIfAuthenticated() {
-                // Add delay to prevent immediate redirect on page load
-                setTimeout(() => {
-                    if (this.isAuthenticated()) {
-                        console.log('User already authenticated, redirecting to dashboard...');
-                        window.location.href = '/dashboard.html';
-                    }
-                }, 500); // 500ms delay
-            },
+
 
             // Complete logout - clear all data and redirect
             logout() {
@@ -235,25 +226,13 @@
                             console.warn('Token expires soon');
                         }
                         
-                        // If expired, show message first then logout
+                        // If expired, logout immediately (no delay to prevent loops)
                         if (tokenAge > parsed.expiresIn) {
-                            console.log('Token expired, logging out...');
-                            
-                            // Show expiry message before redirect (only if not on login page)
+                            console.log('Token expired, removing token...');
+                            this.removeToken();
+                            // Don't redirect on login/register page - user is already here
                             if (window.location.pathname !== '/index.html' && window.location.pathname !== '/register.html') {
-                                // Try to show message if showMessage function exists
-                                if (typeof showMessage === 'function') {
-                                    showMessage('⏰ เซสชันหมดอายุแล้ว กำลังนำท่านกลับสู่หน้าเข้าสู่ระบบ...', true);
-                                }
-                                
-                                // Delay logout to let user see the message
-                                setTimeout(() => {
-                                    this.removeToken();
-                                    this.redirectToLogin();
-                                }, 30000);
-                            } else {
-                                // On login/register page, logout immediately
-                                this.removeToken();
+                                this.redirectToLogin();
                             }
                         }
                     } catch (error) {
@@ -527,7 +506,7 @@
                         const result = await ApiHelper.register({
                             username: username,
                             password: password,
-                            full_name: fullName
+                            fullName: fullName
                         });
 
                         if (result && result.success) {
@@ -545,31 +524,8 @@
                             // Registration failed
                             console.error('Registration failed:', result);
                             
-                            let errorMessage = '❌ เกิดข้อผิดพลาดในการสมัครสมาชิก กรุณาลองใหม่อีกครั้ง';
-                            
-                            if (result?.data?.error || result?.error) {
-                                const error = result.data?.error || result.error;
-                                const lowerError = error.toLowerCase();
-                                
-                                if (lowerError.includes('username') && lowerError.includes('exists')) {
-                                    errorMessage = '❌ ชื่อผู้ใช้นี้มีอยู่ในระบบแล้ว กรุณาเลือกชื่อผู้ใช้อื่น';
-                                } else if (lowerError.includes('username') && lowerError.includes('required')) {
-                                    errorMessage = '❌ กรุณากรอกชื่อผู้ใช้';
-                                } else if (lowerError.includes('password') && lowerError.includes('required')) {
-                                    errorMessage = '❌ กรุณากรอกรหัสผ่าน';
-                                } else if (lowerError.includes('full_name') || lowerError.includes('fullname')) {
-                                    errorMessage = '❌ กรุณากรอกชื่อเต็ม';
-                                } else if (lowerError.includes('username') && lowerError.includes('character')) {
-                                    errorMessage = '❌ ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร';
-                                } else if (lowerError.includes('password') && lowerError.includes('character')) {
-                                    errorMessage = '❌ รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
-                                } else if (lowerError.includes('invalid') && lowerError.includes('format')) {
-                                    errorMessage = '❌ ข้อมูลที่กรอกไม่ถูกรูปแบบ กรุณาตรวจสอบอีกครั้ง';
-                                } else {
-                                    errorMessage = `❌ ${error}`;
-                                }
-                            }
-                            
+                            // แสดงข้อความ error ที่ได้จาก backend โดยตรง
+                            let errorMessage = result?.data?.error || result?.error || '❌ เกิดข้อผิดพลาดในการสมัครสมาชิก กรุณาลองใหม่อีกครั้ง';
                             showMessage(errorMessage, true);
                         }
 
@@ -604,8 +560,7 @@
             setupPasswordToggle();
             setupFormSubmission();
             
-            // Check if user is already logged in when page loads
-            AuthManager.redirectIfAuthenticated();
+            // ไม่ต้องตรวจสอบ auth ในหน้า register - ให้ user สมัครสมาชิกได้เสมอ
         });
     </script>
 

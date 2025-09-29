@@ -10,8 +10,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Phosphor Icons for the eye icon -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <!-- API Client -->
-    <script src="/js/api.js"></script>
     <!-- Authentication utilities will be embedded below -->
     <style>
         /* Custom font from Google Fonts for a cuter look */
@@ -154,7 +152,7 @@
 
     <script>
         // Authentication utilities for Loan Money App
-        // API_BASE_URL is already defined in /js/api.js
+        const API_BASE_URL = 'http://localhost:3001';
 
         // Token Management
         const AuthManager = {
@@ -165,8 +163,17 @@
                     timestamp: Date.now(),
                     expiresIn: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
                 };
-                localStorage.setItem('loan_money_token', JSON.stringify(tokenData));
-                console.log('Token saved with expiry:', new Date(Date.now() + tokenData.expiresIn));
+                try {
+                    console.log('Saving token:', tokenData);
+                    localStorage.setItem('loan_money_token', JSON.stringify(tokenData));
+                    const saved = localStorage.getItem('loan_money_token');
+                    console.log('Token saved to localStorage. Verifying:', saved);
+                    if (!saved) {
+                        console.error('Failed to save token to localStorage!');
+                    }
+                } catch (error) {
+                    console.error('Error saving token to localStorage:', error);
+                }
             },
 
             // Get JWT token from localStorage and check if valid
@@ -181,7 +188,6 @@
                     
                     // Check if token is expired (24 hours)
                     if (tokenAge > parsed.expiresIn) {
-                        console.log('Token expired in getToken(), removing silently...');
                         this.removeToken();
                         // Don't redirect here - let checkTokenExpiry handle it with message
                         return null;
@@ -199,12 +205,21 @@
             removeToken() {
                 localStorage.removeItem('loan_money_token');
                 localStorage.removeItem('loan_money_user');
-                console.log('All tokens and user data cleared');
             },
 
             // Save user information
             saveUser(user) {
-                localStorage.setItem('loan_money_user', JSON.stringify(user));
+                try {
+                    console.log('Saving user:', user);
+                    localStorage.setItem('loan_money_user', JSON.stringify(user));
+                    const saved = localStorage.getItem('loan_money_user');
+                    console.log('User saved to localStorage. Verifying:', saved);
+                    if (!saved) {
+                        console.error('Failed to save user to localStorage!');
+                    }
+                } catch (error) {
+                    console.error('Error saving user to localStorage:', error);
+                }
             },
 
             // Get user information
@@ -252,16 +267,7 @@
                 window.location.href = '/index.html';
             },
 
-            // Redirect to dashboard if already authenticated (but delay check)  
-            redirectIfAuthenticated() {
-                // Add delay to prevent immediate redirect on page load
-                setTimeout(() => {
-                    if (this.isAuthenticated()) {
-                        console.log('User already authenticated, redirecting to dashboard...');
-                        window.location.href = '/dashboard.html';
-                    }
-                }, 500); // 500ms delay
-            },
+
 
             // Complete logout - clear all data and redirect
             logout() {
@@ -290,25 +296,12 @@
                             console.warn('Token expires soon');
                         }
                         
-                        // If expired, show message first then logout
+                        // If expired, logout immediately (no delay to prevent loops)
                         if (tokenAge > parsed.expiresIn) {
-                            console.log('Token expired, logging out...');
-                            
-                            // Show expiry message before redirect (only if not on login page)
+                            this.removeToken();
+                            // Don't redirect on login page - user is already here
                             if (window.location.pathname !== '/index.html' && window.location.pathname !== '/register.html') {
-                                // Try to show message if showMessage function exists
-                                if (typeof showMessage === 'function') {
-                                    showMessage('⏰ เซสชันหมดอายุแล้ว กำลังนำท่านกลับสู่หน้าเข้าสู่ระบบ...', true);
-                                }
-                                
-                                // Delay logout to let user see the message
-                                setTimeout(() => {
-                                    this.removeToken();
-                                    this.redirectToLogin();
-                                }, 30000);
-                            } else {
-                                // On login/register page, logout immediately
-                                this.removeToken();
+                                this.redirectToLogin();
                             }
                         }
                     } catch (error) {
@@ -344,7 +337,6 @@
 
                     // Handle unauthorized responses (expired token)
                     if (response.status === 401) {
-                        console.log('Unauthorized - token expired, logging out...');
                         AuthManager.logout();
                         return { success: false, error: 'Session expired. Please login again.' };
                     }
@@ -491,23 +483,15 @@
             togglePasswordButton = document.getElementById('togglePassword');
             toggleIcon = togglePasswordButton ? togglePasswordButton.querySelector('i') : null;
             
-            console.log('Elements initialized:', {
-                loginForm: !!loginForm,
-                messageDiv: !!messageDiv,
-                passwordInput: !!passwordInput,
-                togglePasswordButton: !!togglePasswordButton,
-                toggleIcon: !!toggleIcon
-            });
+            // Elements initialized successfully
         }
 
         // --- Show/Hide Password Logic ---
         function setupPasswordToggle() {
             if (togglePasswordButton && passwordInput && toggleIcon) {
-                console.log('Setting up password toggle');
                 togglePasswordButton.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Password toggle clicked');
                     const isPassword = passwordInput.type === 'password';
                     passwordInput.type = isPassword ? 'text' : 'password';
                     toggleIcon.classList.toggle('ph-eye');
@@ -609,18 +593,14 @@
         // --- Form Submission Logic ---
         function setupFormSubmission() {
             if (loginForm) {
-                console.log('Setting up form submission');
                 loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             event.stopPropagation();
-            console.log('Form submitted!');
             
             if (messageDiv) messageDiv.textContent = '';
 
             const username = document.getElementById('username').value.trim();
             const password = passwordInput ? passwordInput.value : '';
-
-            console.log('Attempting to log in with:', { username, passwordLength: password.length });
 
             // Validation using ValidationHelper
             const usernameError = ValidationHelper.validateUsername(username);
@@ -645,9 +625,9 @@
 
                 if (result && result.success && result.data) {
                     // Login successful
-                    console.log('Login successful:', result.data);
                     
                     // Save token and user info using AuthManager
+                    console.log('Saving login data:', { token: result.data.token?.substring(0, 20) + '...', user: result.data.user });
                     AuthManager.saveToken(result.data.token);
                     AuthManager.saveUser(result.data.user);
                     
@@ -656,7 +636,8 @@
                         'เข้าสู่ระบบสำเร็จ!', 
                         'ยินดีต้อนรับเข้าสู่ระบบ กำลังนำท่านไปยังหน้าหลัก...', 
                         () => {
-                            window.location.href = '/dashboard.html';
+                            console.log('Redirecting to dashboard...');
+                            window.location.href = './dashboard.html';
                         }
                     );
                     
@@ -664,31 +645,23 @@
                     // Login failed
                     console.error('Login failed:', result);
                     let errorTitle = 'เข้าสู่ระบบไม่สำเร็จ';
-                    let errorMessage = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบและลองใหม่อีกครั้ง';
-                    
-                    // Check for specific error messages from server
-                    if (result?.data?.error) {
-                        const serverError = result.data.error.toLowerCase();
-                        if (serverError.includes('username') || serverError.includes('user not found')) {
-                            errorTitle = 'ไม่พบชื่อผู้ใช้';
-                            errorMessage = 'ไม่พบชื่อผู้ใช้นี้ในระบบ กรุณาตรวจสอบการสะกดหรือสมัครสมาชิกใหม่';
-                        } else if (serverError.includes('password') || serverError.includes('invalid password')) {
-                            errorTitle = 'รหัสผ่านไม่ถูกต้อง';
-                            errorMessage = 'รหัสผ่านที่ป่อนไม่ถูกต้อง กรุณากรอกรหัสผ่านให้ถูกต้อง';
-                        } else if (serverError.includes('invalid credentials')) {
-                            errorTitle = 'ข้อมูลไม่ถูกต้อง';
-                            errorMessage = 'ข้อมูลเข้าสู่ระบบไม่ถูกต้อง กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่านอีกครั้ง';
-                        }
-                    }
-                    
+                    // แสดงข้อความ error ที่ได้จาก backend โดยตรง
+                    let errorMessage = result?.data?.error || result?.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
                     showErrorModal(errorTitle, errorMessage);
                 }
 
             } catch (error) {
                 console.error('Login error:', error);
+                let errorMsg = error?.message || 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้';
+                
+                // Check for common network errors
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMsg = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ API ได้\nกรุณาตรวจสอบ:\n1. เซิร์ฟเวอร์รันอยู่ที่ port 3001\n2. การตั้งค่า CORS\n3. การเชื่อมต่ออินเทอร์เน็ต';
+                }
+                
                 showErrorModal(
-                    'เกิดข้อผิดพลาด', 
-                    'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตและลองใหม่อีกครั้ง'
+                    'ไม่สามารถเชื่อมต่อได้', 
+                    errorMsg
                 );
             } finally {
                 // Re-enable form
@@ -699,9 +672,7 @@
                 // Also add click handler to submit button as backup
                 const submitButton = loginForm.querySelector('button[type="submit"]');
                 if (submitButton) {
-                    console.log('Adding backup click handler to submit button');
                     submitButton.addEventListener('click', (e) => {
-                        console.log('Submit button clicked directly');
                         // Let the form submission handler take over
                     });
                 }
@@ -731,15 +702,12 @@
 
         // Initialize everything when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM Content Loaded');
-            
             initializeElements();
             setupPasswordToggle();
             setupFormSubmission();
             setupModalHandlers();
             
-            // Check auth status when page loads
-            AuthManager.redirectIfAuthenticated();
+            // ไม่ต้องตรวจสอบ auth ในหน้า login - ให้ user ล็อกอินได้เสมอ
         });
     </script>
 
